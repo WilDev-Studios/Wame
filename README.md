@@ -13,7 +13,7 @@ This is primarily because handling the game backend and frontend in a singular f
 - Provides basic objects like font rendering (text), drawing, buttons, etc. (a pain to always make on many projects)
 
 ## How do I use Wame?
-- Install `Wame` via `PyPI`: `pip install wame`
+- Install `Wame` via `PyPI`: `pip install wame-engine`
 - Import it into your program, and follow the steps below:
 ```python
 import wame
