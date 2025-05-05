@@ -3,6 +3,8 @@ Simple, Pythonic, Pygame Wrapper
 - Latest Version `v0.4.0`
 - Supports Python `3.7+`
 
+[![Documentation Status](https://readthedocs.org/projects/wame/badge/?version=latest&style=for-the-badge)](https://wame.readthedocs.io/en/latest/?badge=latest)
+
 ## What is Wame?
 Wame was created as a backend Pygame wrapper, where all backend (and tedious) code is left in the background. This allows for events to be dispatched in specific event methods rather than in a messy manner like default Pygame and most other engine program loops.
 This is primarily because handling the game backend and frontend in a singular file (or a couple) can be an eyesore, and Wame fixes this issue.
