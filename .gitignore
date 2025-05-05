@@ -2,6 +2,7 @@
 _build
 _status
 _templates
+doc_gen.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

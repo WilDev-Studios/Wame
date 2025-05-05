@@ -1,4 +1,5 @@
-# `wame.vector.xyz`
+# wame.vector.xyz
+    
 ```{automodule} wame.vector.xyz
 :members:
 :undoc-members:

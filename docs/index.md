@@ -3,6 +3,7 @@
 ```{toctree}
 :maxdepth: 2
 :caption: Documentation
+:collapse:
 
 documentation/ENGINE
 documentation/SCENE
@@ -18,6 +19,7 @@ documentation/UI
 ```{toctree}
 :maxdepth: 1
 :caption: Tutorials
+:collapse:
 
 tutorials/FPS_DISPLAY
 tutorials/TOGGLED_FPS_DISPLAY
@@ -26,6 +28,7 @@ tutorials/TOGGLED_FPS_DISPLAY
 ```{toctree}
 :maxdepth: 1
 :caption: API Reference
+:collapse:
 
 api/color/rgb
 api/color/values

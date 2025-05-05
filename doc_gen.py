@@ -20,7 +20,8 @@ def create_md(module_name):
     file_path = output_dir.joinpath(*parts).with_suffix(".md")
     file_path.parent.mkdir(parents=True, exist_ok=True)
 
-    content = f"""# `{module_name}`
+    content = f"""# {module_name}
+    
 ```{{automodule}} {module_name}
 :members:
 :undoc-members:

@@ -1,4 +1,5 @@
-# `wame.scene`
+# wame.scene
+    
 ```{automodule} wame.scene
 :members:
 :undoc-members:

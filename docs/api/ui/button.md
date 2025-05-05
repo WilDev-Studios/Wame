@@ -1,4 +1,5 @@
-# `wame.ui.button`
+# wame.ui.button
+    
 ```{automodule} wame.ui.button
 :members:
 :undoc-members:
