@@ -1,4 +1,4 @@
-# FPS Display Tutorial
+# FPS Display
 You want to have a text object that shows the player their own FPS (frames per second)? Look no further - `wame` makes this easy
 
 ## Program

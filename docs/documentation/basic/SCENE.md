@@ -1,4 +1,4 @@
-# Scene Documentation
+# Scene
 On-demand context switching and organized events and calls - all features and elements of `wame`'s game engine.
 
 ## Scene Object

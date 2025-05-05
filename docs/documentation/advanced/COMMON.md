@@ -1,4 +1,4 @@
-# Common Module
+# Common
 Contains commonly used functionality that many developers would need at some point. `Wame` takes care of this for you.
 - So far, only contains `Keys`, but this may change in the future.
 

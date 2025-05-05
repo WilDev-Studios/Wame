@@ -1,4 +1,4 @@
-# Color Module
+# Colors
 Easy access to different colors and functionality for them is frequently necessary for developing games. `Wame` has you covered here.
 
 ## RGB Objects

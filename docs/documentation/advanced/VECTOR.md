@@ -1,4 +1,4 @@
-# Vector Module
+# Vectors
 Game engines usually include 2D/3D vector array objects that developers can interact with. `Wame` is no different.
 - Vectors are created to simplify access and math that is usually associated with XY, XYZ, etc. coordinates.
 - All of these vector objects are able to add and subtract from each other, even with regular `tuple` objects or `numpy` arrays of the same dimension. Vectors are natively hashable and can be compared to one another.

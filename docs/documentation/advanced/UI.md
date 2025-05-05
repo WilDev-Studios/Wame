@@ -1,4 +1,4 @@
-# UI Module
+# User Interface (UI)
 Provides easy-to-use user-interface elements that are commonly used in games. `Wame` makes these easy to use and manipulate.
 
 ## Renderable

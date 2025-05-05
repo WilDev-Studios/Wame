@@ -1,4 +1,4 @@
-# FPS Display Tutorial
+# Toggleable FPS Display
 You already have a FPS display but want to toggle it? Look no further - `wame` makes this easy
 - Desired that we toggle it when `F1` is pressed, for example
 - FPS text is disabled by default

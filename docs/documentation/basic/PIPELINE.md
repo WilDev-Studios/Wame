@@ -1,4 +1,4 @@
-# Pipeline Documentation
+# Pipeline
 The `wame` game `Engine` uses different rendering pipelines, defined below, to render objects/elements onto the screen during runtime.
 
 ## Pipeline Types

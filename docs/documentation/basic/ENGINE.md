@@ -1,4 +1,4 @@
-# Engine Documentation
+# Engine
 The `Engine` is the starting point of any game made with the `wame` module.
 
 ## What is the Engine?
