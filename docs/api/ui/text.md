@@ -1,7 +1,6 @@
-```markdown
-:::{automodule} wame.ui.text
+# `wame.ui.text`
+```{automodule} wame.ui.text
 :members:
 :undoc-members:
 :show-inheritance:
-:::
 ```
