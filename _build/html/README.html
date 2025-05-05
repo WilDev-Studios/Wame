@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Wame &#8212; wame  documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d1102ebc" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="wame">
+<h1>Wame<a class="headerlink" href="#wame" title="Link to this heading">¶</a></h1>
+<p>Simple, Pythonic, Pygame Wrapper</p>
+<ul class="simple">
+<li><p>Latest Version <code class="docutils literal notranslate"><span class="pre">v0.4.0</span></code></p></li>
+<li><p>Supports Python <code class="docutils literal notranslate"><span class="pre">3.7+</span></code></p></li>
+</ul>
+<section id="what-is-wame">
+<h2>What is Wame?<a class="headerlink" href="#what-is-wame" title="Link to this heading">¶</a></h2>
+<p>Wame was created as a backend Pygame wrapper, where all backend (and tedious) code is left in the background. This allows for events to be dispatched in specific event methods rather than in a messy manner like default Pygame and most other engine program loops.
+This is primarily because handling the game backend and frontend in a singular file (or a couple) can be an eyesore, and Wame fixes this issue.</p>
+</section>
+<section id="what-are-wame-s-features">
+<h2>What are Wame’s features?<a class="headerlink" href="#what-are-wame-s-features" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Encapsulates Pygame’s backend game programming</p></li>
+<li><p>Dispatches and calls methods needed to render and update game code, while executing events in a structured manner</p></li>
+<li><p>Allows on-demand scene switching (more about this later)</p></li>
+<li><p>Provides basic objects like font rendering (text), drawing, buttons, etc. (a pain to always make on many projects)</p></li>
+</ul>
+</section>
+<section id="how-do-i-use-wame">
+<h2>How do I use Wame?<a class="headerlink" href="#how-do-i-use-wame" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Install <code class="docutils literal notranslate"><span class="pre">Wame</span></code> via <code class="docutils literal notranslate"><span class="pre">PyPI</span></code>: <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">wame-engine</span></code></p></li>
+<li><p>Import it into your program, and follow the steps below:</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">wame</span>
+
+<span class="n">engine</span><span class="p">:</span> <span class="n">wame</span><span class="o">.</span><span class="n">Engine</span> <span class="o">=</span> <span class="n">wame</span><span class="o">.</span><span class="n">Engine</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<span class="n">engine</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="feature-documentation">
+<h2>Feature Documentation<a class="headerlink" href="#feature-documentation" title="Link to this heading">¶</a></h2>
+<p>Below is a list of different features of the engine and how to use them</p>
+<section id="basic-runtime-setup">
+<h3>Basic Runtime Setup<a class="headerlink" href="#basic-runtime-setup" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">ENGINE</span></code>: <a class="reference external" href="https://github.com/WilDev-Studios/Wame/tree/main/docs/documentation/basic/ENGINE.md">Learn how to use the <code class="docutils literal notranslate"><span class="pre">Engine</span></code> here</a></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SCENE</span></code>: <a class="reference external" href="https://github.com/WilDev-Studios/Wame/tree/main/docs/documentation/basic/SCENE.md">Learn how to use the <code class="docutils literal notranslate"><span class="pre">Scene</span></code> here</a></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PIPELINE</span></code>: <a class="reference external" href="https://github.com/WilDev-Studios/Wame/tree/main/docs/documentation/basic/PIPELINE.md">Learn what <code class="docutils literal notranslate"><span class="pre">Pipeline</span></code> is here</a></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SETTINGS</span></code>: <a class="reference external" href="https://github.com/WilDev-Studios/Wame/tree/main/docs/documentation/basic/SETTINGS.md">Learn how to use <code class="docutils literal notranslate"><span class="pre">Settings</span></code> here</a></p></li>
+</ul>
+</section>
+<section id="advanced-features">
+<h3>Advanced Features<a class="headerlink" href="#advanced-features" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">COLOR</span></code>: <a class="reference external" href="https://github.com/WilDev-Studios/Wame/tree/main/docs/documentation/advanced/COLOR.md">Learn how to use the <code class="docutils literal notranslate"><span class="pre">Color</span></code> module here</a></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">COMMON</span></code>: <a class="reference external" href="https://github.com/WilDev-Studios/Wame/tree/main/docs/documentation/advanced/COMMON.md">Learn how to use the <code class="docutils literal notranslate"><span class="pre">Common</span></code> module here</a></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">UI</span></code>: <a class="reference external" href="https://github.com/WilDev-Studios/Wame/tree/main/docs/documentation/advanced/UI.md">Learn how to use the <code class="docutils literal notranslate"><span class="pre">UI</span></code> module here</a></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">VECTOR</span></code>: <a class="reference external" href="https://github.com/WilDev-Studios/Wame/tree/main/docs/documentation/advanced/VECTOR.md">Learn how to use the <code class="docutils literal notranslate"><span class="pre">Vector</span></code> module here</a></p></li>
+</ul>
+</section>
+</section>
+<section id="program-tutorials">
+<h2>Program Tutorials<a class="headerlink" href="#program-tutorials" title="Link to this heading">¶</a></h2>
+<p>Below is a list of different tutorials that outlined programs that may be used a lot</p>
+<section id="basic-tutorials">
+<h3>Basic Tutorials<a class="headerlink" href="#basic-tutorials" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">FPS</span> <span class="pre">DISPLAY</span></code>: <a class="reference external" href="https://github.com/WilDev-Studios/Wame/tree/main/docs/tutorials/basic/FPS_DISPLAY.md">Learn how to create a basic FPS text display here</a></p></li>
+</ul>
+</section>
+<section id="advanced-tutorials">
+<h3>Advanced Tutorials<a class="headerlink" href="#advanced-tutorials" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">TOGGLED</span> <span class="pre">FPS</span> <span class="pre">DISPLAY</span></code>: <a class="reference external" href="https://github.com/WilDev-Studios/Wame/tree/main/docs/tutorials/advanced/TOGGLED_FPS_DISPLAY.md">Learn how to create a toggleable FPS text display here</a></p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">wame</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, WilDev Studios.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.2.3</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="_sources/README.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

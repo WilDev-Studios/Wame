@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Pipeline Documentation &#8212; wame  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d1102ebc" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=27fed22d" />
+    <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="pipeline-documentation">
+<h1>Pipeline Documentation<a class="headerlink" href="#pipeline-documentation" title="Link to this heading">¶</a></h1>
+<p>The <code class="docutils literal notranslate"><span class="pre">wame</span></code> game <code class="docutils literal notranslate"><span class="pre">Engine</span></code> uses different rendering pipelines, defined below, to render objects/elements onto the screen during runtime.</p>
+<section id="pipeline-types">
+<h2>Pipeline Types<a class="headerlink" href="#pipeline-types" title="Link to this heading">¶</a></h2>
+<p>Defined in <code class="docutils literal notranslate"><span class="pre">wame.pipeline</span></code>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">OPENGL</span></code>: Flags the <code class="docutils literal notranslate"><span class="pre">Engine</span></code> to only set <code class="docutils literal notranslate"><span class="pre">Pygame</span></code> up to use <code class="docutils literal notranslate"><span class="pre">OpenGL</span></code> rendering, and only changes the background color to the desired, normalized <code class="docutils literal notranslate"><span class="pre">RGB</span></code> values:</p>
+<ul>
+<li><p>Allows the use of most <code class="docutils literal notranslate"><span class="pre">Pygame</span></code> functionality, but rendering is left to raw <code class="docutils literal notranslate"><span class="pre">OpenGL</span></code> commands, like those found in <code class="docutils literal notranslate"><span class="pre">PyOpenGL</span></code>.</p></li>
+<li><p>This is very advanced, and not recommended for most developers unless performance is critical (and development time is extended).</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PYGAME</span></code>: Flags the <code class="docutils literal notranslate"><span class="pre">Engine</span></code> to run <code class="docutils literal notranslate"><span class="pre">Pygame</span></code> as normal:</p>
+<ul>
+<li><p>Allows the use of all normal <code class="docutils literal notranslate"><span class="pre">Pygame</span></code> functionality, including drawing, fonts, etc.</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="example-programs">
+<h2>Example Programs<a class="headerlink" href="#example-programs" title="Link to this heading">¶</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Only used when instantiating the `Engine`</span>
+<span class="n">engine</span><span class="p">:</span> <span class="n">wame</span><span class="o">.</span><span class="n">Engine</span> <span class="o">=</span> <span class="n">wame</span><span class="o">.</span><span class="n">Engine</span><span class="p">(</span><span class="s2">&quot;Test Window&quot;</span><span class="p">,</span> <span class="n">wame</span><span class="o">.</span><span class="n">Pipeline</span><span class="o">.</span><span class="n">OPENGL</span><span class="p">)</span>
+<span class="c1"># OR</span>
+<span class="n">engine</span><span class="p">:</span> <span class="n">wame</span><span class="o">.</span><span class="n">Engine</span> <span class="o">=</span> <span class="n">wame</span><span class="o">.</span><span class="n">Engine</span><span class="p">(</span><span class="s2">&quot;Test Window&quot;</span><span class="p">,</span> <span class="n">wame</span><span class="o">.</span><span class="n">Pipeline</span><span class="o">.</span><span class="n">PYGAME</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># If you&#39;d like to draw a line, it depends on what `Pipeline` you used</span>
+
+<span class="c1"># If `PYGAME` is desired, your life is easy:</span>
+<span class="k">def</span> <span class="nf">on_render</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="c1"># Inside `Scene`</span>
+    <span class="n">pygame</span><span class="o">.</span><span class="n">draw</span><span class="o">.</span><span class="n">line</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">screen</span><span class="p">,</span> <span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">),</span> <span class="n">point_xy_1</span><span class="p">,</span> <span class="n">point_xy_2</span><span class="p">)</span>
+    <span class="c1"># Draw a line     On screen      All white      1st Point   2nd Point</span>
+    <span class="c1">#                                \--RGB--/      \----- tuples -----/</span>
+
+<span class="c1"># If `OPENGL` is desired (why) - BE SURE TO CREATE YOUR CONTEXT IN `on_first`:</span>
+<span class="k">def</span> <span class="nf">on_render</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="c1"># Inside `Scene`</span>
+    <span class="n">glBegin</span><span class="p">(</span><span class="n">GL_LINES</span><span class="p">)</span> <span class="c1"># Tell OpenGL to draw using lines</span>
+    <span class="n">glColor3f</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="c1"># Use normalized RGB values (normalized = RGB / 255)</span>
+
+    <span class="n">glVertex2f</span><span class="p">(</span><span class="o">*</span><span class="n">point_xy_1</span><span class="p">)</span> <span class="c1"># Tell it the first coordinate</span>
+    <span class="n">glVertex2f</span><span class="p">(</span><span class="o">*</span><span class="n">point_xy_2</span><span class="p">)</span> <span class="c1"># Tell it the second coordinate</span>
+
+    <span class="n">glEnd</span><span class="p">()</span> <span class="c1"># End the draw call</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">wame</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, WilDev Studios.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.2.3</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="../../../_sources/docs/documentation/basic/PIPELINE.md.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
