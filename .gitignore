@@ -1,3 +1,8 @@
+# Wame specific
+_build
+_status
+_templates
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
