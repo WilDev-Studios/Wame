@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wame-engine"
+version = "0.4.0"
+description = "Wame Game Engine"
+readme = "README.md"
+requires-python = ">=3.7"
+license = "MIT"
+authors = [
+    { name = "WilDev Studios", email = "wildevstudios@gmail.com" }
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Topic :: Games/Entertainment",
+    "Topic :: Software Development :: Libraries :: pygame"
+]
+keywords = ["python", "pygame", "wrapper", "engine", "game", "opengl", "2D", "3D"]
+dependencies = ["pygame", "opengl", "numpy"]
+
+[project.urls]
+"Homepage" = "https://github.com/WilDev-Studios/Wame"
