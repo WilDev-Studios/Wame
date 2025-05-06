@@ -5,15 +5,15 @@
 :caption: Documentation
 :collapse:
 
-documentation/ENGINE
-documentation/SCENE
-documentation/PIPELINE
-documentation/SETTINGS
+documentation/engine
+documentation/scene
+documentation/pipeline
+documentation/settings
 
-documentation/COLOR
-documentation/COMMON
-documentation/VECTOR
-documentation/UI
+documentation/color
+documentation/common
+documentation/vector
+documentation/ui
 ```
 
 ```{toctree}
@@ -21,6 +21,6 @@ documentation/UI
 :caption: Tutorials
 :collapse:
 
-tutorials/FPS_DISPLAY
-tutorials/TOGGLED_FPS_DISPLAY
+tutorials/fps_display
+tutorials/toggled_fps_display
 ```

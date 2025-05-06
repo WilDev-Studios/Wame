@@ -25,7 +25,7 @@ def on_render(self) -> None: # Inside `Scene`
     # Draw a line     On screen      All white      1st Point   2nd Point
     #                                \--RGB--/      \----- tuples -----/
 
-# If `OPENGL` is desired (why) - BE SURE TO CREATE YOUR CONTEXT IN `on_first`:
+# If `OPENGL` is desired (why):
 def on_render(self) -> None: # Inside `Scene`
     glBegin(GL_LINES) # Tell OpenGL to draw using lines
     glColor3f(1, 1, 1) # Use normalized RGB values (normalized = RGB / 255)
@@ -35,3 +35,5 @@ def on_render(self) -> None: # Inside `Scene`
 
     glEnd() # End the draw call
 ```
+> [!CAUTION]
+> If using OpenGL, be sure to create your context in `on_first`. The `Engine` only manages the background color, everything else is up to you.
