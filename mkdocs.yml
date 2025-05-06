@@ -1,0 +1,90 @@
+site_name: Wame Engine Documentation
+site_url: https://wame.wildevstudios.net
+copyright: Copyright &copy; 2025 WilDev Studios. This software is protected by copyright and licensed under the MIT license.
+
+repo_url: https://github.com/WilDev-Studios/Wame
+
+theme:
+  name: material
+  palette:
+    scheme: slate
+    primary: pink
+  font:
+    text: Quicksand
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.tracking
+    - navigation.expand
+    - navigation.path
+    - navigation.indexes
+    - search.suggest
+    - content.code.copy
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: ["."]
+          options:
+            heading_level: 3
+            annotations_path: source
+            docstring_style: numpy
+            docstring_section_style: numpy
+            inherited_members: true
+            merge_init_into_class: true
+            separate_signature: true
+            show_signature: true
+            show_signature_annotations: true
+            show_source: false
+            show_submodules: false
+            signature_crossrefs: true
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            members_order: source
+            extra:
+              show_toc: false
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+
+extra:
+  generator: false
+
+nav:
+  - Home: index.md
+  - Documentation:
+    - Color: pages/documentation/color.md
+    - Common: pages/documentation/common.md
+    - Engine: pages/documentation/engine.md
+    - Pipeline: pages/documentation/pipeline.md
+    - Scene: pages/documentation/scene.md
+    - Settings: pages/documentation/settings.md
+    - UI: pages/documentation/ui.md
+    - Vector: pages/documentation/vector.md
+  - Tutorials:
+    - FPS Display: pages/tutorials/fps_display.md
+    - Toggled FPS Display: pages/tutorials/toggled_fps_display.md
+  - API Reference:
+    - Color:
+      - RGB: pages/api/color/rgb.md
+      - Values: pages/api/color/values.md
+    - Common:
+      - Keys: pages/api/common/keys.md
+    - UI:
+      - Button: pages/api/ui/button.md
+      - Frame: pages/api/ui/frame.md
+      - Image: pages/api/ui/image.md
+      - Input: pages/api/ui/input.md
+      - Renderable: pages/api/ui/renderable.md
+      - Text: pages/api/ui/text.md
+    - Vector:
+      - XY: pages/api/vector/xy.md
+      - XYZ: pages/api/vector/xyz.md
+    - Engine: pages/api/engine.md
+    - Pipeline: pages/api/pipeline.md
+    - Scene: pages/api/scene.md
+    - Settings: pages/api/settings.md

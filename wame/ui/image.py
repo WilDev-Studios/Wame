@@ -13,6 +13,12 @@ class Image(Renderable):
     '''UI Image Object'''
 
     def __init__(self, parent:Frame, image:pygame.Surface, y_flipped:bool=False) -> None:
+        """
+
+        Info
+        ----
+        The `y_flipped` variable is only needed if you are using the `OPENGL` `Pipeline` and this object is upside down based on your `OpenGL` context.
+        """
         super().__init__(parent._engine)
 
         parent.add_child(self)

@@ -15,6 +15,12 @@ class Text(Renderable):
     '''UI Text Object'''
 
     def __init__(self, parent:Frame, text:str, color:ColorRGBA, font:pygame.font.Font, y_flipped:bool=False) -> None:
+        """
+
+        Info
+        ----
+        The `y_flipped` variable is only needed if you are using the `OPENGL` `Pipeline` and this object is upside down based on your `OpenGL` context.
+        """
         super().__init__(parent._engine)
 
         color = color if isinstance(color, ColorRGBA) else ColorRGBA.from_tuple(color)

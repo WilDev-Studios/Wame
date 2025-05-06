@@ -1,26 +1,16 @@
-# Welcome to the Wame Engine Documentation
+# Wame Engine Documentation
+Simple, Pythonic, Pygame Wrapper
 
-```{toctree}
-:maxdepth: 2
-:caption: Documentation
-:collapse:
+## What is Wame?
+Wame was created as a backend Pygame wrapper, where all backend (and tedious) code is left in the background. This allows for events to be dispatched in specific event methods rather than in a messy manner like default Pygame and most other engine program loops.
+This is primarily because handling the game backend and frontend in a singular file (or a couple) can be an eyesore, and Wame fixes this issue.
 
-documentation/engine
-documentation/scene
-documentation/pipeline
-documentation/settings
+## What are Wame's features?
+- Encapsulates Pygame's backend game programming
+- Dispatches and calls methods needed to render and update game code, while executing events in a structured manner
+- Allows on-demand scene switching (more about this later)
+- Provides basic objects like font rendering (text), drawing, buttons, etc. (a pain to always make on many projects)
 
-documentation/color
-documentation/common
-documentation/vector
-documentation/ui
-```
-
-```{toctree}
-:maxdepth: 1
-:caption: Tutorials
-:collapse:
-
-tutorials/fps_display
-tutorials/toggled_fps_display
-```
+## How do I use Wame?
+- Install `Wame` via `PyPI`: `pip install wame-engine`
+- Import it into your program

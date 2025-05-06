@@ -31,6 +31,10 @@ class Frame(Renderable):
         Note
         ----
         Scenes already natively contain a UI frame. Unless you want to make a sub-frame to encapsulate other child renderables, using the `Scene`'s `frame` attribute should be sufficient
+
+        Info
+        ----
+        The `y_flipped` variable is only needed if you are using the `OPENGL` `Pipeline` and this object is upside down based on your `OpenGL` context.
         '''
 
         super().__init__(parent if isinstance(parent, wame.Engine) else parent._engine)

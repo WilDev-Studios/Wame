@@ -153,7 +153,6 @@ class Engine:
         '''
         
         self._running = False
-        self.scene.on_quit()
 
     def register_scene(self, name:str, scene:Scene, overwrite:bool=False) -> None:
         '''
@@ -208,9 +207,9 @@ class Engine:
         Warning
         -------
         If you plan on bundling this game into an executable file:
-        - Continue to use this method, but also include the raw scene program files in the folder provided as well as the .exe file OR
-        - Manually register each scene
-        #### This is because to bundle Python into executable files, there must be a direct reference to dependencies. Hotloading scenes has no direct reference.
+        Continue to use this method, but also include the raw scene program files in the folder provided as well as the .exe file OR
+        manually register each scene.
+        This is because to bundle Python into executable files, there must be a direct reference to dependencies. Hotloading scenes has no direct reference.
 
         Note
         ----

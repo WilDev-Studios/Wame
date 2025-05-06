@@ -35,5 +35,5 @@ def on_render(self) -> None: # Inside `Scene`
 
     glEnd() # End the draw call
 ```
-> [!CAUTION]
-> If using OpenGL, be sure to create your context in `on_first`. The `Engine` only manages the background color, everything else is up to you.
+!!! warning
+    If using OpenGL, be sure to create your context in `on_first`. The `Engine` only manages the background color, everything else is up to you.

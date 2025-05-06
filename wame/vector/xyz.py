@@ -118,21 +118,21 @@ class IntVector3:
 
     def __init__(self, x:int, y:int, z:int) -> None:
         '''
-        Instantiate a new Vector with integer X, Y, and Z values
+        Instantiate a new Vector with integer X, Y, and Z values.
         
         Parameters
         ----------
-        x : `int`
-            The X value
-        y : `int`
-            The Y value
-        z : `int`
-            The Z value
+        x : int
+            The X value.
+        y : int
+            The Y value.
+        z : int
+            The Z value.
         
         Raises
         ------
-        `ValueError`
-            If any provided arguments are not integers
+        ValueError
+            If any provided arguments are not integers.
         '''
         
         if not isinstance(x, int):

@@ -5,8 +5,8 @@ The `Engine` is the starting point of any game made with the `wame` module.
 The `Engine` encapsulates all backend `Pygame` code that manages the window, rendering, audio, etc. of the game. All the `Engine` does it organize it into one object that is extremely intuitive and easy to use.
 
 ## How do I instantiate the Engine?
-> [!IMPORTANT]
-> Keep in mind, the `Engine` is a singleton instance, so there can only ever be one instance per program.
+!!! note
+    Keep in mind, the `Engine` is a singleton instance, so there can only ever be one instance per program.
 
 This is how you create it:
 ```python
@@ -62,5 +62,5 @@ engine.set_scene("Test")
 engine.start() # Make sure the engine is started, otherwise it won't work (duh)
 ```
 This should run the window with just a black screen, assuming the color wasn't changed with `engine.set_background(...)`.
-> [!WARNING]
-> Please note that since the game engine is an infinite running loop (assuming no interrupts), no code below the `.start()` line will execute until the `Engine` has quit.
+!!! warning
+    Please note that since the game engine is an infinite running loop (assuming no interrupts), no code below the `.start()` line will execute until the `Engine` has quit.

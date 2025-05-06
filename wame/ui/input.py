@@ -34,6 +34,10 @@ class CheckboxInput(Renderable):
             The original state of the input before any interaction - Default `False`
         y_flipped : `bool`
             If it should be rendered with the Y-axis flipped - May be necessary depending on your OpenGL setup
+
+        Info
+        ----
+        The `y_flipped` variable is only needed if you are using the `OPENGL` `Pipeline` and this object is upside down based on your `OpenGL` context.
         '''
 
         super().__init__(parent._engine)

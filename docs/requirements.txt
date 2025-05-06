@@ -1,5 +1,11 @@
-sphinx
-myst-parser
-furo
-sphinx-autodoc-typehints
-sphinx-autoapi
+mkdocs
+mkdocs-material
+mkdocs-material-extensions
+mkdocstrings[python]
+mkdocstrings
+black
+Pygments
+pymdown-extensions
+Markdown
+MarkupSafe
+griffe-inherited-docstrings

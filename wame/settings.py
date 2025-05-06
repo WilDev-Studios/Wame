@@ -13,21 +13,11 @@ class Settings:
     '''Engine Global Settings'''
 
     def __init__(self, data:dict[str, int], engine:'Engine') -> None:
-        '''
-        Initialize the engine settings
-        
-        Note
-        ----
-        This should only be instantiated by the engine internally.
-        Avoid calling this yourself.
-        
-        Parameters
-        ----------
-        data : `dict[str, Any]`
-            The raw settings contents from the known settings persistence file
-        engine : `wame.engine.Engine`
-            The engine using these settings
-        '''
+        """
+        Warning
+        -------
+        This is an internal object and should not be instantiated elsewhere.
+        """
         
         self._engine:'Engine' = engine
 
@@ -110,15 +100,6 @@ class Settings:
             self.screen = pygame.display.set_mode(self._engine._size.to_tuple(), pygame.HWSURFACE | pygame.DOUBLEBUF | pygame.OPENGL, display=self._engine._display, vsync=self._vsync)
 
     def export(self) -> dict[str, int]:
-        '''
-        Export the class instance to a raw, storable type
-        
-        Returns
-        -------
-        rawSettings : `dict[str, int]`
-            The raw class instance data
-        '''
-        
         return {
             "antialiasing": self._antialiasing,
             "max_fps": self._max_fps,

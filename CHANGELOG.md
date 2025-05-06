@@ -1,8 +1,22 @@
 # Changelog
-- Version `0.4.0`
 - **NOTE**: `Wame`'s development status is still in `Beta`. Many breaking changes will occur until our stable `1.0.0` release.
 
-## Breaking Changes
+## Version 0.4.1 (Not Released)
+This is here to keep track of all changes before the release - to address expectations.
+
+### Breaking Changes
+- Removal of `Scene` `on_quit` method (as `on_cleanup` is used here).
+
+### Additions
+...
+
+### Fixes
+...
+
+## Version 0.4.0
+Released `May 5th, 2025`
+
+### Breaking Changes
 - Removed the `settingsOverride` parameter in the `Engine` constructor.
 - Renamed the `Renderer` class to `Pipeline` to make it more understandable/readable.
 - Complete rewrite of the UI system:
@@ -20,7 +34,7 @@
 - `Scene` `on_update()` and `on_render()` methods are now required.
 - All object parameter names are now using `snake_case` rather than `camelCase` (by `Python` convention).
 
-## Added
+### Additions
 - New `FloatVector2` object.
 - Ability to pass in data between scenes when switching them using the `Engine` `set_scene` method.
 - Colors have been added in the `wame.color` module.
@@ -33,13 +47,42 @@
 - Mouse button argument added when `Scene` dispatches `on_mouse_pressed` and `on_mouse_released` events.
 - `Engine` is now a singleton object as now only one instance can be created.
 - `Engine.pipeline` is now added as a property, so you can check the pipeline during runtime if necessary.
-- Source documentation added to the GitHub repository (https://github.com/WilDev-Studios/Wame/tree/main/docs/).
 - Python `3.7+` is now supported, instead of `3.10+`.
 
-## Fixed
+### Fixes
 - Never called a scene's `on_first` event when the scene was switched to after another scene was already loaded.
 - Any arguments requiring a `wame` vector object should now be able to accept `tuple` objects.
 - `Engine` `set_mouse_visible` and `set_mouse_locked` never updated the actual state of the mouse's visibility or grab status.
 - `Engine` will no longer automatically clear the console on startup.
 - `max_fps` `Setting` wasn't updating the `Engine`'s set FPS.
 - `Engine().scene` wasn't set when `on_first` was called.
+
+## Version 0.3.0
+Released `October 13th, 2024`
+
+No changelog recorded.
+
+## Version 0.2.0
+Released `August 28th, 2024`
+
+No changelog recorded.
+
+## Version 0.1.0
+Released `July 11th, 2024`
+
+No changelog recorded.
+
+## Version 0.0.1 (YANKED)
+Released `July 11th, 2024`
+
+No changelog recorded.
+
+## Version 0.0.1.dev2 (PRERELEASE)
+Released `July 11th, 2024`
+
+No changelog recorded.
+
+## Version 0.0.1.dev1 (PRERELEASE)
+Released `July 11th, 2024`
+
+No changelog recorded.

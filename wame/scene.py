@@ -19,12 +19,9 @@ class Scene(ABC):
 
     def __init__(self, engine:'Engine') -> None:
         '''
-        Instantiate a new scene
-        
-        Parameters
-        ----------
-        engine : `wame.Engine`
-            The engine instance
+        Warning
+        -------
+        All `Scene` objects/instances are managed and created internally by the `Engine`. At no point will any developer need to do anything more than define a subclass of `Scene`.
         '''
         
         self.engine:'Engine' = engine
@@ -308,24 +305,6 @@ class Scene(ABC):
             
             def on_update(self) -> None:
                 ... # Update positions, text, etc.
-        ```
-        '''
-        
-        ...
-    
-    def on_quit(self) -> None:
-        '''
-        Code below should be executed when the engine quits
-
-        Example
-        -------
-        ```python
-        class MyScene(wame.Scene):
-            def __init__(self, engine) -> None:
-                super().__init__(engine)
-            
-            def on_quit(self) -> None:
-                ... # Save data, cleanup objects, etc.
         ```
         '''
         
