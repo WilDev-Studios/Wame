@@ -24,25 +24,3 @@ documentation/UI
 tutorials/FPS_DISPLAY
 tutorials/TOGGLED_FPS_DISPLAY
 ```
-
-```{toctree}
-:maxdepth: 1
-:caption: API Reference
-:collapse:
-
-api/color/rgb
-api/color/values
-api/common/keys
-api/ui/button
-api/ui/frame
-api/ui/image
-api/ui/input
-api/ui/renderable
-api/ui/text
-api/vector/xy
-api/vector/xyz
-api/engine
-api/pipeline
-api/scene
-api/settings
-```

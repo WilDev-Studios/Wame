@@ -15,10 +15,7 @@ author = 'WilDev Studios'
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
-    "myst_parser",
-    "sphinx.ext.autodoc",
-    "sphinx.ext.autosummary",
-    "sphinx_autodoc_typehints"
+    "myst_parser"
 ]
 
 source_suffix = {
@@ -35,7 +32,3 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 html_theme = 'furo'
 html_static_path = ['_static']
-
-import os
-import sys
-sys.path.insert(0, os.path.abspath('../'))
