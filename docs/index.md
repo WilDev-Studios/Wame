@@ -13,4 +13,4 @@ This is primarily because handling the game backend and frontend in a singular f
 
 ## How do I use Wame?
 - Install `Wame` via `PyPI`: `pip install wame-engine`
-- Import it into your program
+- Import it into your program using `import wame`

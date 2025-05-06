@@ -17,34 +17,28 @@ This is primarily because handling the game backend and frontend in a singular f
 
 ## How do I use Wame?
 - Install `Wame` via `PyPI`: `pip install wame-engine`
-- Import it into your program, and follow the steps below:
-```python
-import wame
-
-engine: wame.Engine = wame.Engine(...)
-engine.start()
-```
+- Import it into your program using `import wame`
 
 ## Feature Documentation
 Below is a list of different features of the engine and how to use them
 
 ### Basic Runtime Setup
-- `ENGINE`: [Learn how to use the `Engine` here](https://github.com/WilDev-Studios/Wame/tree/main/docs/documentation/basic/ENGINE.md)
-- `SCENE`: [Learn how to use the `Scene` here](https://github.com/WilDev-Studios/Wame/tree/main/docs/documentation/basic/SCENE.md)
-- `PIPELINE`: [Learn what `Pipeline` is here](https://github.com/WilDev-Studios/Wame/tree/main/docs/documentation/basic/PIPELINE.md)
-- `SETTINGS`: [Learn how to use `Settings` here](https://github.com/WilDev-Studios/Wame/tree/main/docs/documentation/basic/SETTINGS.md)
+- `ENGINE`: [Learn how to use the `Engine` here](https://wame.wildevstudios.net/en/latest/pages/documentation/engine/)
+- `SCENE`: [Learn how to use the `Scene` here](https://wame.wildevstudios.net/en/latest/pages/documentation/scene/)
+- `PIPELINE`: [Learn what `Pipeline` is here](https://wame.wildevstudios.net/en/latest/pages/documentation/pipeline/)
+- `SETTINGS`: [Learn how to use `Settings` here](https://wame.wildevstudios.net/en/latest/pages/documentation/settings/)
 
 ### Advanced Features
-- `COLOR`: [Learn how to use the `Color` module here](https://github.com/WilDev-Studios/Wame/tree/main/docs/documentation/advanced/COLOR.md)
-- `COMMON`: [Learn how to use the `Common` module here](https://github.com/WilDev-Studios/Wame/tree/main/docs/documentation/advanced/COMMON.md)
-- `UI`: [Learn how to use the `UI` module here](https://github.com/WilDev-Studios/Wame/tree/main/docs/documentation/advanced/UI.md)
-- `VECTOR`: [Learn how to use the `Vector` module here](https://github.com/WilDev-Studios/Wame/tree/main/docs/documentation/advanced/VECTOR.md)
+- `COLOR`: [Learn how to use the `Color` module here](https://wame.wildevstudios.net/en/latest/pages/documentation/color/)
+- `COMMON`: [Learn how to use the `Common` module here](https://wame.wildevstudios.net/en/latest/pages/documentation/common/)
+- `UI`: [Learn how to use the `UI` module here](https://wame.wildevstudios.net/en/latest/pages/documentation/ui/)
+- `VECTOR`: [Learn how to use the `Vector` module here](https://wame.wildevstudios.net/en/latest/pages/documentation/vector/)
 
 ## Program Tutorials
 Below is a list of different tutorials that outlined programs that may be used a lot
 
 ### Basic Tutorials
-- `FPS DISPLAY`: [Learn how to create a basic FPS text display here](https://github.com/WilDev-Studios/Wame/tree/main/docs/tutorials/basic/FPS_DISPLAY.md)
+- `FPS DISPLAY`: [Learn how to create a basic FPS text display here](https://wame.wildevstudios.net/en/latest/pages/tutorials/fps_display/)
 
 ### Advanced Tutorials
-- `TOGGLED FPS DISPLAY`: [Learn how to create a toggleable FPS text display here](https://github.com/WilDev-Studios/Wame/tree/main/docs/tutorials/advanced/TOGGLED_FPS_DISPLAY.md)
+- `TOGGLED FPS DISPLAY`: [Learn how to create a toggleable FPS text display here](https://wame.wildevstudios.net/en/latest/pages/tutorials/toggled_fps_display/)
