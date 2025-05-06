@@ -9,8 +9,5 @@ python:
   install:
     - requirements: docs/requirements.txt
 
-sphinx:
-  configuration: false
-
 mkdocs:
   configuration: mkdocs.yaml
