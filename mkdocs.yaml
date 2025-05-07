@@ -6,11 +6,14 @@ repo_url: https://github.com/WilDev-Studios/Wame
 
 theme:
   name: material
+  logo: images/logo.png
+  favicon: images/logo-padded.png
   palette:
-    scheme: slate
-    primary: pink
+    - scheme: slate
+      primary: green
+      accent: cyan
   font:
-    text: Quicksand
+    text: Monospace
   features:
     - navigation.tabs
     - navigation.tabs.sticky
