@@ -89,3 +89,4 @@ nav:
     - Pipeline: pages/api/pipeline.md
     - Scene: pages/api/scene.md
     - Settings: pages/api/settings.md
+  - Changelog: pages/CHANGELOG.md

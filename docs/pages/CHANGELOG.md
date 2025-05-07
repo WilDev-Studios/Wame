@@ -1,7 +1,7 @@
 # Changelog
 - **NOTE**: `Wame`'s development status is still in `Beta`. Many breaking changes will occur until our stable `1.0.0` release.
 
-## Version 0.5.0
+## Version 0.5.0 (STAGING - Prerelease)
 This is here to keep track of all changes before the release - to address expectations.
 
 ### Breaking Changes

@@ -2,7 +2,6 @@
 _build
 _status
 _templates
-CHANGELOG.md
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
