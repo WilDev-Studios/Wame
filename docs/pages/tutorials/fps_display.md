@@ -3,16 +3,17 @@ You want to have a text object that shows the player their own FPS (frames per s
 
 ## Program
 ```python
+from wame.ui import Text
+
 import pygame
 import wame
-import wame.ui as wui # Needed for the text object
 
 class TutorialScene(wame.Scene):
     def __init__(self, engine: wame.Engine) -> None:
         super().__init__(engine) # All basic setup
 
         #                                    Parent       Text       RGB Color                  Font
-        self.fps_text: wui.Text = wui.Text(self.frame, "FPS | 0", (125, 125, 125), pygame.font.SysFont("Ubuntu", 12))
+        self.fps_text: Text = Text(self.frame, "FPS | 0", (125, 125, 125), pygame.font.SysFont("Ubuntu", 12))
         self.fps_text.set_pixel_position((5, 5)) # Sets the top-left of the text at `5, 5` on the screen
     
     def on_render(self) -> None:
