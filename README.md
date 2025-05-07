@@ -19,26 +19,74 @@ This is primarily because handling the game backend and frontend in a singular f
 - Install `Wame` via `PyPI`: `pip install wame-engine`
 - Import it into your program using `import wame`
 
-## Feature Documentation
-Below is a list of different features of the engine and how to use them
+## Documentation
+You can find our documentation [here](https://wame.wildevstudios.net/)
 
-### Basic Runtime Setup
-- `ENGINE`: [Learn how to use the `Engine` here](https://wame.wildevstudios.net/en/latest/pages/documentation/engine/)
-- `SCENE`: [Learn how to use the `Scene` here](https://wame.wildevstudios.net/en/latest/pages/documentation/scene/)
-- `PIPELINE`: [Learn what `Pipeline` is here](https://wame.wildevstudios.net/en/latest/pages/documentation/pipeline/)
-- `SETTINGS`: [Learn how to use `Settings` here](https://wame.wildevstudios.net/en/latest/pages/documentation/settings/)
+## Getting Started
+After installation:
+- Instantiate a new `Engine` (runs the game loop and dispatches events)
+- Define a new `~Scene` subclass (manages your objects and logic)
+```python
+import wame
 
-### Advanced Features
-- `COLOR`: [Learn how to use the `Color` module here](https://wame.wildevstudios.net/en/latest/pages/documentation/color/)
-- `COMMON`: [Learn how to use the `Common` module here](https://wame.wildevstudios.net/en/latest/pages/documentation/common/)
-- `UI`: [Learn how to use the `UI` module here](https://wame.wildevstudios.net/en/latest/pages/documentation/ui/)
-- `VECTOR`: [Learn how to use the `Vector` module here](https://wame.wildevstudios.net/en/latest/pages/documentation/vector/)
+class BasicScene(wame.Scene):
+    def __init__(self, engine: wame.Engine) -> None:
+        super().__init__(engine)
+    
+    def on_render(self) -> None:
+        ...
+    
+    def on_update(self) -> None:
+        ...
 
-## Program Tutorials
-Below is a list of different tutorials that outlined programs that may be used a lot
+engine: wame.Engine = wame.Engine("Basic Game Window", wame.Pipeline.PYGAME)
+engine.register_scene("Basic", BasicScene)
+engine.set_scene("Basic")
 
-### Basic Tutorials
-- `FPS DISPLAY`: [Learn how to create a basic FPS text display here](https://wame.wildevstudios.net/en/latest/pages/tutorials/fps_display/)
+engine.start()
+```
+This will create a fullscreen, black window. You can close it by pressing `ALT`+`F4`.
+- If you'd like to see more functional examples, visit our [Tutorials](https://wame.wildevstudios.net/en/latest/pages/tutorials/fps_display/) section of our documentation
 
-### Advanced Tutorials
-- `TOGGLED FPS DISPLAY`: [Learn how to create a toggleable FPS text display here](https://wame.wildevstudios.net/en/latest/pages/tutorials/toggled_fps_display/)
+## Contributing
+Thanks for your interest in contributing to our game engine! Contributions are welcome, as they can only help us get to where we want to see `wame` go!
+Whether you want to submit a bug report, fix a bug, add a new feature, remove parts of the program, we welcome your contributions.
+
+### How to Contribute
+1. Fork this repository
+    - Fork this repository to your own GitHub account by clicking the "Fork" button at the top-right of this page.
+2. Clone your fork
+    - Clone the forked repository to your local machine using the following command:
+    - `git clone https://github.com/your-username/your-fork.git`
+3. Create a new branch
+    - Before making any changes, create a new branch with a descriptive name for your work/changes. For example:
+    - `git checkout -b feature-name`
+4. Make your changes
+    - Implement your changes, whether it's fixing bugs, improving documentation, or adding new features.
+    - Be sure to write clear, concise commit messages explaining the changes you've made.
+5. Commit your changes
+    - Once your changes are ready, commit them to your local branch:
+    - `git add .`
+    - `git commit -m "Add feature-name"`
+6. Push your changes
+    - Push your changes to your forked repository:
+    - `git push origin feature-name`
+7. Create a pull request
+    - Open a pull request on the original repository from your fork.
+    - Ensure that your pull request explains the purpose of the changes and any relevant context.
+    - If applicable, include links to relevant issues.
+
+### Reporting Bugs
+- If you find a bug or issue, please open an issue on the `Issues` page above.
+- Be sure to provide detailed information to help us understand and reproduce the problem.
+
+### Feature Requests
+- We welcome suggestions for new features.
+- If you have an idea, please open an issue on the `Issues` page above to discuss it first.
+- This ensures that we're all on the same page and helps us prioritize improvements.
+
+### Thanks for Contributing!
+Your contributions make this project better and more useful for everyone! Thank you for taking the time to improve this project!
+
+## License
+This project is licensed under the [MIT License](https://github.com/WilDev-Studios/Wame/blob/main/LICENSE). Copyright &copy; 2025 WilDev Studios. All rights reserved. 
