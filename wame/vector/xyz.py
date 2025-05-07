@@ -8,25 +8,29 @@ import math
 class FloatVector3:
     '''Vector with 3 Float Values: X, Y, and Z'''
 
-    def __init__(self, x:float, y:float, z:float) -> None:
+    def __init__(self, x:Union[float | int], y:Union[float | int], z:Union[float | int]) -> None:
         '''
         Instantiate a new Vector with float X, Y, and Z values
         
         Parameters
         ----------
-        x : `float`
+        x : float | int
             The X value
-        y : `float`
+        y : float | int
             The Y value
-        z : `float`
+        z : float | int
             The Z value
         
         Raises
         ------
-        `ValueError`
-            If any provided arguments are not floats
+        ValueError
+            If any provided arguments are not `float` or `int`
         '''
         
+        if not isinstance(x, (float, int)) or not isinstance(y, (float, int)) or not isinstance(z, (float, int)):
+            error:str = "Types of X, Y, Z must be of `float` or `int`"
+            raise ValueError(error)
+
         if isinstance(x, int):
             x = float(x)
         
@@ -72,21 +76,26 @@ class FloatVector3:
         return f"X: {self.x}, Y: {self.y}, Z: {self.z}"
     
     @classmethod
-    def from_tuple(cls, xyz:tuple[float, float, float]) -> FloatVector3:
+    def from_tuple(cls, xyz:tuple[Union[float, int], Union[float, int], Union[float, int]]) -> FloatVector3:
         '''
         Instantiate a new Vector from a tuple with float X, Y, and Z values
         
         Parameters
         ----------
-        xyz : `tuple[float, float, float]`
+        xyz : tuple[float | int, float | int, float | int]
             The tuple with the X, Y, and Z values
         
         Raises
         ------
-        `ValueError`
-            If the provided items in the tuple are not floats
+        ValueError
+            - If too many or little items are provided in the tuple
+            - If the provided items in the tuple are not floats
         '''
         
+        if len(xyz) != 3:
+            error:str = "XYZ tuple value must contain 3 values"
+            raise ValueError(error)
+
         return cls(xyz[0], xyz[1], xyz[2])
     
     def to_numpy(self) -> np.ndarray[np.int32]:
@@ -95,7 +104,7 @@ class FloatVector3:
         
         Returns
         -------
-        array : `numpy.ndarray[numpy.float32]`
+        array : numpy.ndarray[numpy.float32]
             Converted x, y, and z values
         '''
 
@@ -107,7 +116,7 @@ class FloatVector3:
         
         Returns
         -------
-        vector : `tuple[float, float, float]`
+        vector : tuple[float, float, float]
             Converted x, y, and z values
         '''
 
@@ -118,21 +127,21 @@ class IntVector3:
 
     def __init__(self, x:int, y:int, z:int) -> None:
         '''
-        Instantiate a new Vector with integer X, Y, and Z values.
+        Instantiate a new Vector with integer X, Y, and Z values
         
         Parameters
         ----------
         x : int
-            The X value.
+            The X value
         y : int
-            The Y value.
+            The Y value
         z : int
-            The Z value.
+            The Z value
         
         Raises
         ------
         ValueError
-            If any provided arguments are not integers.
+            If any provided arguments are not integers
         '''
         
         if not isinstance(x, int):
@@ -182,32 +191,37 @@ class IntVector3:
     def __repr__(self) -> str:
         return f"X: {self.x}, Y: {self.y}, Z: {self.z}"
     
-    def cross(self, vector:Union[IntVector3, 'FloatVector3']) -> Union[IntVector3, 'FloatVector3']:
+    def cross(self, vector:IntVector3) -> IntVector3:
         '''
         Calculate the cross product of two vectors
         
         Parameters
         ----------
-        vector : `wame.IntVector3, wame.FloatVector3`
+        vector : wame.IntVector3
             The other vector to cross with this vector
         
         Returns
         -------
-        cross : `wame.IntVector3, wame.FloatVector3`
-            The cross product - Will be `wame.IntVector3` if `vector` is a `wame.IntVector3`, else `wame.FloatVector3`
+        cross : wame.IntVector3
+            The cross product
+        
+        Raises
+        ------
+        ValueError
+            If the vector provided is not a `wame.vector.xyz.IntVector3`
         '''
+
+        if not isinstance(vector, IntVector3):
+            error:str = "Provided vector must be a `wame.vector.xyz.IntVector3`"
+            raise ValueError(error)
 
         result:tuple[float, int, float, int, float, int] = (
             (self.y * vector.z) - (self.z * vector.y),
             (self.z * vector.x) - (self.x * vector.z),
             (self.x * vector.y) - (self.y * vector.x)
         )
-
-        if isinstance(vector, IntVector3):
-            if isinstance(result[0], int) and isinstance(result[1], int) and isinstance(result[2], int):
-                return IntVector3.from_tuple(result)
         
-        return FloatVector3.from_tuple(result)
+        return IntVector3.from_tuple(result)
 
     @classmethod
     def from_tuple(cls, xyz:tuple[int, int, int]) -> IntVector3:
@@ -216,14 +230,19 @@ class IntVector3:
         
         Parameters
         ----------
-        xyz : `tuple[int, int, int]`
+        xyz : tuple[int, int, int]
             The tuple with the X, Y, and Z values
         
         Raises
         ------
-        `ValueError`
-            If the provided items in the tuple are not integers
+        ValueError
+            - If the provided items in the tuple are not integers
+            - If the provided tuple does not contain 3 values
         '''
+
+        if len(xyz) != 3:
+            error:str = "XYZ tuple must contain 3 values"
+            raise ValueError(error)
         
         return cls(xyz[0], xyz[1], xyz[2])
     
@@ -233,7 +252,7 @@ class IntVector3:
         
         Returns
         -------
-        vector : `wame.FloatVector3`
+        vector : wame.FloatVector3
             This vector normalized
         '''
 
@@ -250,7 +269,7 @@ class IntVector3:
         
         Returns
         -------
-        array : `numpy.ndarray[numpy.int32]`
+        array : numpy.ndarray[numpy.int32]
             Converted x, y, and z values
         '''
 
@@ -262,7 +281,7 @@ class IntVector3:
         
         Returns
         -------
-        vector : `tuple[int, int, int]`
+        vector : tuple[int, int, int]
             Converted x, y, and z values
         '''
 

@@ -14,7 +14,7 @@ class Renderable:
         
         Parameters
         ----------
-        engine : `wame.Engine`
+        engine : wame.Engine
             The engine to hook this UI object to
         '''
         
@@ -37,8 +37,13 @@ class Renderable:
         
         Parameters
         ----------
-        child : `wame.ui.renderable.Renderable`
+        child : wame.ui.renderable.Renderable
             The child renderable object
+        
+        Raises
+        ------
+        ValueError
+            If the provided child is not a `Renderable`
         '''
 
         if not isinstance(child, Renderable):
@@ -57,6 +62,8 @@ class Renderable:
 
     @property
     def rect(self) -> pygame.Rect:
+        '''The bounding size and positions of this object'''
+        
         return pygame.Rect(self.position.to_tuple(), self.size.to_tuple())
 
     def remove_child(self, child:'Renderable') -> None:
@@ -65,8 +72,14 @@ class Renderable:
         
         Parameters
         ----------
-        child : `wame.ui.renderable.Renderable`
+        child : wame.ui.renderable.Renderable
             The child renderable object
+        
+        Raises
+        ------
+        ValueError
+            - Child must be a `Renderable`
+            - Child was not found as a child to this parent
         '''
 
         if not isinstance(child, Renderable):

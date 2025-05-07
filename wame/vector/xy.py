@@ -7,22 +7,26 @@ import numpy as np
 class FloatVector2:
     '''Vector with 2 Float Values: X and Y'''
 
-    def __init__(self, x:float, y:float) -> None:
+    def __init__(self, x:Union[float, int], y:Union[float, int]) -> None:
         '''
         Instantiate a new Vector with float X and Y values
         
         Parameters
         ----------
-        x : `float`
+        x : float
             The X value
-        y : `float`
+        y : float
             The Y value
         
         Raises
         ------
-        `ValueError`
-            If any provided arguments are not floats
+        ValueError
+            If any provided arguments are not `float` or `int`
         '''
+
+        if not isinstance(x, (float, int)) or not isinstance(y, (float, int)):
+            error:str = "XY values must be `float` or `int`"
+            raise ValueError(error)
         
         if isinstance(x, int):
             x = float(x)
@@ -65,30 +69,35 @@ class FloatVector2:
         return f"X: {self.x}, Y: {self.y}"
     
     @classmethod
-    def from_tuple(cls, xy:tuple[float, float]) -> FloatVector2:
+    def from_tuple(cls, xy:tuple[Union[float, int], Union[float, int]]) -> FloatVector2:
         '''
         Instantiate a new Vector from a tuple with float X and Y values
         
         Parameters
         ----------
-        xy : `tuple[float, float]`
+        xy : tuple[float | int, float | int]
             The tuple with the X and Y values
         
         Raises
         ------
-        `ValueError`
-            If the provided items in the tuple are not floats
+        ValueError
+            - If the provided items in the tuple are not `float` or `int`
+            - If the provided tuple does not contain 2 values
         '''
+
+        if len(xy) != 2:
+            error:str = "XY tuple can only contain 2 values"
+            raise ValueError(error)
         
         return cls(xy[0], xy[1])
     
     def to_numpy(self) -> np.ndarray[np.int32]:
         '''
-        Convers this instance of `FloatVector2` into a numpy array
+        Converts this instance of `FloatVector2` into a numpy array
         
         Returns
         -------
-        array : `numpy.ndarray[numpy.float32]`
+        array : numpy.ndarray[numpy.float32]
             Converted x and Y values
         '''
 
@@ -100,7 +109,7 @@ class FloatVector2:
         
         Returns
         -------
-        vector : `tuple[float, float]`
+        vector : tuple[float, float]
             Converted x and y values
         '''
 
@@ -115,14 +124,14 @@ class IntVector2:
         
         Parameters
         ----------
-        x : `int`
+        x : int
             The X value
-        y : `int`
+        y : int
             The Y value
         
         Raises
         ------
-        `ValueError`
+        ValueError
             If any provided arguments are not integers
         '''
         
@@ -175,14 +184,19 @@ class IntVector2:
         
         Parameters
         ----------
-        xy : `tuple[int, int]`
+        xy : tuple[int, int]
             The tuple with the X and Y values
         
         Raises
         ------
-        `ValueError`
-            If the provided items in the tuple are not integers
+        ValueError
+            - If the provided items in the tuple are not integers
+            - If the provided tuple does not contain 2 values
         '''
+
+        if len(xy) != 2:
+            error:str = "XY tuple must contain 2 values"
+            raise ValueError(error)
         
         return cls(xy[0], xy[1])
     
@@ -192,7 +206,7 @@ class IntVector2:
         
         Returns
         -------
-        array : `numpy.ndarray[numpy.int32]`
+        array : numpy.ndarray[numpy.int32]
             Converted x and y values
         '''
 
@@ -204,7 +218,7 @@ class IntVector2:
         
         Returns
         -------
-        vector : `tuple[int, int]`
+        vector : tuple[int, int]
             Converted x and y values
         '''
 

@@ -111,14 +111,14 @@ def is_char(key:int, mods:int) -> bool:
     
     Parameters
     ----------
-    key : `int`
+    key : int
         The raw `pygame` key code
-    mods : `int`
+    mods : int
         The raw `pygame` key mods
     
     Returns
     -------
-    isChar : `bool`
+    bool
         If this key/mods combination equates to a character on the keyboard
     '''
 
@@ -133,14 +133,14 @@ def is_letter(key:int, mods:int) -> bool:
     
     Parameters
     ----------
-    key : `int`
+    key : int
         The raw `pygame` key code
-    mods : `int`
+    mods : int
         The raw `pygame` key mods
     
     Returns
     -------
-    isLetter : `bool`
+    bool
         If this key/mods combination equates to a letter
     '''
 
@@ -152,14 +152,14 @@ def is_lower(key:int, mods:int) -> bool:
     
     Parameters
     ----------
-    key : `int`
+    key : int
         The raw `pygame` key code
-    mods : `int`
+    mods : int
         The raw `pygame` key mods
     
     Returns
     -------
-    isLower : `bool`
+    bool
         If this key/mods combination equates to a lowercase letter
     '''
 
@@ -176,14 +176,14 @@ def is_number(key:int, mods:int) -> bool:
     
     Parameters
     ----------
-    key : `int`
+    key : int
         The raw `pygame` key code
-    mods : `int`
+    mods : int
         The raw `pygame` key mods
     
     Returns
     -------
-    isNumber : `bool`
+    bool
         If this key/mods combination equates to a number/digit
     '''
 
@@ -198,14 +198,14 @@ def is_symbol(key:int, mods:int) -> bool:
     
     Parameters
     ----------
-    key : `int`
+    key : int
         The raw `pygame` key code
-    mods : `int`
+    mods : int
         The raw `pygame` key mods
     
     Returns
     -------
-    isSymbol : `bool`
+    bool
         If this key/mods combination equates to a symbol
     '''
 
@@ -222,14 +222,14 @@ def is_upper(key:int, mods:int) -> bool:
     
     Parameters
     ----------
-    key : `int`
+    key : int
         The raw `pygame` key code
-    mods : `int`
+    mods : int
         The raw `pygame` key mods
     
     Returns
     -------
-    isUpper : `bool`
+    bool
         If this key/mods combination equates to an uppercase letter
     '''
 

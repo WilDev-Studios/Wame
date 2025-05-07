@@ -24,15 +24,15 @@ class CheckboxInput(Renderable):
         
         Parameters
         ----------
-        parent : `wame.ui.frame.Frame`
+        parent : wame.ui.frame.Frame
             The parent of this input
-        checkedColor : `wame.color.rgb.ColorRGBA`
+        checkedColor : wame.color.rgb.ColorRGBA
             The color of the box when checked (`True`/active)
-        uncheckedColor : `wame.color.rgb.ColorRGBA`
+        uncheckedColor : wame.color.rgb.ColorRGBA
             The color of the box when unchecked (`False`/inactive)
-        default : `bool`
+        default : bool
             The original state of the input before any interaction - Default `False`
-        y_flipped : `bool`
+        y_flipped : bool
             If it should be rendered with the Y-axis flipped - May be necessary depending on your OpenGL setup
 
         Info
@@ -65,7 +65,7 @@ class CheckboxInput(Renderable):
         
         Parameters
         ----------
-        position : `wame.vector.xy.IntVector2`
+        position : wame.vector.xy.IntVector2
             The X, Y vector/position of the mouse
         '''
 
@@ -161,6 +161,17 @@ class CheckboxInput(Renderable):
             child.ask_render()
     
     def set_border(self, color:ColorRGBA, width:int) -> None:
+        '''
+        Set the border of this object
+        
+        Parameters
+        ----------
+        color : wame.color.rgb.ColorRGBA
+            The color to set the border to
+        width : int
+            The width of the border
+        '''
+        
         self._border_color = color if isinstance(color, ColorRGBA) else ColorRGBA.from_tuple(color)
         self._border_width = width
 
@@ -170,13 +181,22 @@ class CheckboxInput(Renderable):
         
         Parameters
         ----------
-        func : `typing.Callable[[bool], None]`
+        func : typing.Callable[[bool], None]
             The callback method to call - Takes the state of the input (`True`/`False`) as the only parameter
         '''
 
         self._callback = func
 
     def set_pixel_position(self, position:IntVector2) -> None:
+        '''
+        Set the exact pixel position of this object
+        
+        Parameters
+        ----------
+        position : wame.vector.xy.IntVector2
+            The exact position of this object from the top-left point
+        '''
+        
         position = position if isinstance(position, IntVector2) else IntVector2.from_tuple(position)
 
         if self._parent:
@@ -186,9 +206,32 @@ class CheckboxInput(Renderable):
         self.position = position
 
     def set_pixel_size(self, size:IntVector2) -> None:
+        '''
+        Set the exact pixel size of this object
+        
+        Parameters
+        ----------
+        size : wame.vector.xy.IntVector2
+            The exact size of this object
+        '''
+        
         self.size = size if isinstance(size, IntVector2) else IntVector2.from_tuple(size)
 
     def set_scaled_position(self, position:FloatVector2) -> None:
+        '''
+        Set the scaled position of this object
+        
+        Parameters
+        ----------
+        position : wame.vector.xy.FloatVector2
+            The scaled position of this object from the top-left point
+        
+        Raises
+        ------
+        ValueError
+            If the provided positional values exceed `0`-`1`
+        '''
+        
         position = position if isinstance(position, FloatVector2) else FloatVector2.from_tuple(position)
 
         if position.x > 1 or position.x < 0 or position.y > 1 or position.y < 0:
@@ -207,6 +250,20 @@ class CheckboxInput(Renderable):
         self.position = newPosition
     
     def set_scaled_size(self, size:IntVector2) -> None:
+        '''
+        Set the scaled size of this object
+        
+        Parameters
+        ----------
+        size : wame.vector.xy.IntVector2
+            The scaled size of this object
+        
+        Raises
+        ------
+        ValueError
+            If the provided size values exceed `0`-`1`
+        '''
+        
         size = size if isinstance(size, FloatVector2) else FloatVector2.from_tuple(size)
 
         if size.x > 1 or size.x < 0 or size.y > 1 or size.y < 0:
@@ -233,15 +290,15 @@ class TextInput(Renderable):
         
         Parameters
         ----------
-        parent : `wame.ui.frame.Frame`
+        parent : wame.ui.frame.Frame
             The parent of this input
-        textColor : `wame.color.rgb.ColorRGBA`
+        textColor : wame.color.rgb.ColorRGBA
             The color of the text inside of the input
-        font : `pygame.font.Font`
+        font : pygame.font.Font
             The font of the text inside of the input
-        default : `str`
+        default : str
             The original text to show in the input before any interaction - Default `None`
-        yFlipped : `bool`
+        yFlipped : bool
             If it should be rendered with the Y-axis flipped - May be necessary depending on your OpenGL setup
         '''
 
@@ -271,7 +328,7 @@ class TextInput(Renderable):
         
         Parameters
         ----------
-        position : `wame.vector.xy.IntVector2`
+        position : wame.vector.xy.IntVector2
             The X, Y vector/position of the mouse
         '''
 
@@ -294,11 +351,11 @@ class TextInput(Renderable):
         
         Parameters
         ----------
-        key : `int`
+        key : int
             The raw `pygame` keycode input
-        mods : `int`
+        mods : int
             The raw `pygame` key modifications
-        predicate : `typing.Callable[[int, int], bool]`
+        predicate : typing.Callable[[int, int], bool]
             A function object that should be used to filter out whether the input should or should not be accepted - Default `None` (all will be entered)
         '''
 
@@ -409,6 +466,17 @@ class TextInput(Renderable):
             child.ask_render()
     
     def set_border(self, color:ColorRGBA, width:int) -> None:
+        '''
+        Set the border of this object
+        
+        Parameters
+        ----------
+        color : wame.color.rgb.ColorRGBA
+            The color to set the border to
+        width : int
+            The width of the border
+        '''
+        
         self._border_color = color if isinstance(color, ColorRGBA) else ColorRGBA.from_tuple(color)
         self._border_width = width
 
@@ -418,16 +486,34 @@ class TextInput(Renderable):
         
         Parameters
         ----------
-        func : `typing.Callable[[None], None]`
+        func : typing.Callable[[None], None]
             The callback method to call
         '''
 
         self._callback = func
 
     def set_color(self, color:ColorRGBA) -> None:
+        '''
+        Set the color of this object
+        
+        Parameters
+        ----------
+        color : wame.color.rgb.ColorRGBA
+            The color of this object
+        '''
+        
         self._color = color if isinstance(color, ColorRGBA) else ColorRGBA.from_tuple(color)
 
     def set_pixel_position(self, position:IntVector2) -> None:
+        '''
+        Set the exact pixel position of this object
+        
+        Parameters
+        ----------
+        position : wame.vector.xy.IntVector2
+            The exact position of this object from the top-left point
+        '''
+
         position = position if isinstance(position, IntVector2) else IntVector2.from_tuple(position)
 
         if self._parent:
@@ -442,6 +528,15 @@ class TextInput(Renderable):
             ))
 
     def set_pixel_size(self, size:IntVector2) -> None:
+        '''
+        Set the exact pixel size of this object
+        
+        Parameters
+        ----------
+        size : wame.vector.xy.IntVector2
+            The exact size of this object
+        '''
+        
         self.size = size if isinstance(size, IntVector2) else IntVector2.from_tuple(size)
 
         if self.position:
@@ -450,6 +545,20 @@ class TextInput(Renderable):
             ))
 
     def set_scaled_position(self, position:FloatVector2) -> None:
+        '''
+        Set the scaled position of this object
+        
+        Parameters
+        ----------
+        position : wame.vector.xy.FloatVector2
+            The scaled position of this object from the top-left point
+        
+        Raises
+        ------
+        ValueError
+            If the provided positional values exceed `0`-`1`
+        '''
+
         position = position if isinstance(position, FloatVector2) else FloatVector2.from_tuple(position)
 
         if position.x > 1 or position.x < 0 or position.y > 1 or position.y < 0:
@@ -473,6 +582,20 @@ class TextInput(Renderable):
             ))
     
     def set_scaled_size(self, size:IntVector2) -> None:
+        '''
+        Set the scaled size of this object
+        
+        Parameters
+        ----------
+        size : wame.vector.xy.IntVector2
+            The scaled size of this object
+        
+        Raises
+        ------
+        ValueError
+            If the provided size values exceed `0`-`1`
+        '''
+
         size = size if isinstance(size, FloatVector2) else FloatVector2.from_tuple(size)
 
         if size.x > 1 or size.x < 0 or size.y > 1 or size.y < 0:

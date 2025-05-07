@@ -1,41 +1,53 @@
 from __future__ import annotations
 
+from typing import Union
 from wame.color.rgb import ColorRGBA
+from wame.common.interval import Interval
 from wame.vector import IntVector2
 from wame.settings import Settings
 from wame.pipeline import Pipeline
 from wame.scene import Scene
 
-import importlib
-import pygame
-import json
 import ast
+import importlib
+import json
 import os
+import pygame
+import time
 
 pygame.init()
 pygame.font.init()
+pygame.joystick.init()
 
 class Engine:
     '''Game Engine'''
     
     _previously_instantiated:bool = False
 
-    def __init__(self, name:str, pipeline:Pipeline, *, size:IntVector2=IntVector2(0, 0), display:int=0, icon_filepath:str=None) -> None:
+    def __init__(self, name:str, pipeline:Pipeline, *, size:IntVector2=IntVector2(0, 0), display:int=0, icon:pygame.Surface=None, settings_persistent:bool=True) -> None:
         '''
         Instantiates a game engine that handles all backend code for running games
         
         Parameters
         ----------
-        name : `str`
+        name : str
             The name of the engine window
-        pipeline : `wame.Pipeline`
+        pipeline : wame.pipeline.Pipeline
             The pipeline library the engine should use
-        size : `wame.vector.IntVector2`
+        size : wame.vector.xy.IntVector2
             The X and Y sizes for the game window
-        display : `int`
+        display : int
             The index of the display/monitor for the rendering screen
-        icon_filepath : `str`
-            The filepath of the game window icon
+        icon : pygame.Surface
+            The image/surface of the game window icon
+        settings_persistent : bool
+            If the engine should read and write the internal `wame.settings.Settings` object persistently, otherwise persistency will be controlled by the developer
+        
+        Raises
+        ------
+        RuntimeError
+            - If more than one instance of `wame.engine.Engine` is created during runtime
+            - If an unsupported `wame.pipeline.Pipeline` is set as the pipeline
         '''
 
         if Engine._previously_instantiated:
@@ -46,24 +58,28 @@ class Engine:
 
         self._name:str = name
 
-        self.screen:pygame.Surface = None
-        '''The screen that the engine is rendering to'''
+        self._screen:pygame.Surface = None
         self._clock:pygame.time.Clock = pygame.time.Clock()
         self._deltaTime:float = 0.001
         self._running:bool = False
 
-        if not os.path.exists("settings.json"):
-            with open("settings.json", 'w') as file:
-                file.write("{}")
+        if settings_persistent:
+            if not os.path.exists("settings.json"):
+                with open("settings.json", 'w') as file:
+                    file.write("{}")
         
-        with open("settings.json") as file:
-            self.settings:Settings = Settings(json.load(file), self)
-            '''The settings that the engine renders/runs the game with'''
+        self.settings:Settings = None
+        '''The settings that the engine renders/runs the game with'''
+        self._settings_persistent:bool = settings_persistent
 
-        self.scene:Scene = None
-        '''The scene that is currently active - `None` if no scene is running'''
-        self.scenes:dict[str, Scene] = {}
-        '''The key-value pairs of scenes and their names (name: scene)'''
+        if self._settings_persistent:
+            with open("settings.json") as file:
+                self.settings = Settings(json.load(file), self)
+        else:
+            self.settings = Settings({}, self)
+
+        self._scene:Scene = None
+        self._scenes:dict[str, Scene] = {}
 
         self._set_fps:int = self.settings.max_fps
         self._background_color:ColorRGBA = ColorRGBA(0, 0, 0, 1.0)
@@ -82,17 +98,22 @@ class Engine:
         self._display:int = display
         self.set_pipeline(pipeline)
 
-        if icon_filepath:
-            pygame.display.set_icon(pygame.image.load(icon_filepath.replace('\\', '/')))
+        if icon:
+            pygame.display.set_icon(icon)
 
         pygame.display.set_caption(self._name)
 
         pygame.mouse.set_visible(self._mouse_visibility)
         pygame.event.set_grab(self._mouse_grabbed)
 
+        self._fixed_update_interval:float = Interval.HZ_60
+        self._fixed_update_accumulator:float = 0.0
+        self._fixed_update_last:float = 0.0
+
     def _cleanup(self) -> None:
-        with open("settings.json", 'w') as file:
-            json.dump(self.settings.export(), file, indent=4)
+        if self._settings_persistent:
+            with open("settings.json", 'w') as file:
+                json.dump(self.settings.export(), file, indent=4)
 
     def _mainloop(self) -> None:
         if not self.scene:
@@ -102,13 +123,22 @@ class Engine:
         self._running = True
 
         while self._running:
-            self.scene._check_events()
-            self.scene._check_keys()
-            self.scene._update()
+            self._scene._check_events()
+            self._scene._check_keys()
+            self._scene._update()
 
-            self.scene._render()
+            now:float = time.perf_counter()
+            frame_time:float = now - self._fixed_update_last
+            self._fixed_update_last = now
+            self._fixed_update_accumulator += frame_time
+
+            while self._fixed_update_accumulator >= self._fixed_update_interval:
+                self._scene._fixed_update()
+                self._fixed_update_accumulator -= self._fixed_update_interval
+
+            self._scene._render()
         
-        self.scene._cleanup()
+        self._scene._cleanup()
         self._cleanup()
 
     @property
@@ -160,25 +190,24 @@ class Engine:
         
         Parameters
         ----------
-        name : `str`
+        name : str
             The unique name used to lookup and manipulate this scene
-        scene : `wame.Scene`
+        scene : wame.scene.Scene
             The scene to register
-        overwrite : `bool`
+        overwrite : bool
             If the unique name is already used, overwrite it, else throw an error - Default `False`
         
         Raises
         ------
-        `wame.UniqueNameAlreadyExists`
+        RuntimeError
             If the unique name already exists and overwriting is not enabled
         '''
         
-        if not overwrite:
-            if name in self.scenes:
-                error:str = f"Scene name \"{name}\" already in use"
-                raise RuntimeError(error)
+        if not overwrite and name in self._scenes:
+            error:str = f"Scene name \"{name}\" already in use"
+            raise RuntimeError(error)
 
-        self.scenes[name] = scene
+        self._scenes[name] = scene
 
     def register_scenes(self, scenes:dict[str, Scene], overwrite:bool=False) -> None:
         '''
@@ -186,14 +215,14 @@ class Engine:
         
         Parameters
         ----------
-        scenes : `dict[str, wame.Scene]`
+        scenes : dict[str, wame.scene.Scene]
             The name-scene pairs to register
-        overwrite : `bool`
+        overwrite : bool
             If any unique name is already used, overwrite it, else throw an error - Default `False`
         
         Raises
         ------
-        `wame.UniqueNameAlreadyExists`
+        RuntimeError
             If any unique name already exists and overwriting is not enabled
         '''
 
@@ -204,8 +233,21 @@ class Engine:
         '''
         Register all Scene objects within all files in a folder to the engine
         
-        Warning
-        -------
+        Parameters
+        ----------
+        folder : str
+            The folder to register scenes from
+        overwrite : bool
+            If any unique name is already used, overwrite it, else throw an error - Default `False`
+        
+        Raises
+        ------
+        RuntimeError
+            - If the folder path provided does not exist or if the folder path does not direct to a folder
+            - If any unique name already exists and overwriting is not enabled
+
+        Tip
+        ---
         If you plan on bundling this game into an executable file:
         Continue to use this method, but also include the raw scene program files in the folder provided as well as the .exe file OR
         manually register each scene.
@@ -229,20 +271,6 @@ class Engine:
         Will generate unique name "MainMenu" and can be used to set the scene later on
 
         And so forth...
-        
-        Parameters
-        ----------
-        folder : `str`
-            The folder to register scenes from
-        overwrite : `bool`
-            If any unique name is already used, overwrite it, else throw an error - Default `False`
-        
-        Raises
-        ------
-        `wame.SceneFolderNotFound`
-            If the folder path provided does not exist or if the folder path does not direct to a folder
-        `wame.UniqueNameAlreadyExists`
-            If any unique name already exists and overwriting is not enabled
         '''
         
         if not os.path.exists(folder):
@@ -282,13 +310,31 @@ class Engine:
 
         return self._running
 
+    @property
+    def scene(self) -> Scene:
+        '''The currently active scene - `None` if not running'''
+
+        return self._scene
+    
+    @property
+    def scenes(self) -> dict[str, Scene]:
+        '''The `ID: Scene` key-mapping of all registered scenes'''
+
+        return self._scenes
+    
+    @property
+    def screen(self) -> pygame.Surface:
+        '''The screen/window the `Engine` is handling'''
+
+        return self._screen
+
     def set_background(self, color:ColorRGBA=ColorRGBA(0, 0, 0, 1.0)) -> None:
         '''
         Set the background color of the engine rendering scene
         
         Parameters
         ----------
-        color : `wame.color.rgb.ColorRGBA`
+        color : wame.color.rgb.ColorRGBA
             The background color to apply to all scenes - Default `ColorRGBA(0, 0, 0, 1.0)`
         '''
 
@@ -303,7 +349,7 @@ class Engine:
         
         Parameters
         ----------
-        state : `bool`
+        state : bool
             If the mouse should be visible or hidden - Default `True`
         '''
 
@@ -316,7 +362,7 @@ class Engine:
         
         Parameters
         ----------
-        state : `bool`
+        state : bool
             If the mouse should be locked or not - Default `False`
         '''
 
@@ -329,20 +375,25 @@ class Engine:
         
         Parameters
         ----------
-        pipeline : `wame.Pipeline`
+        pipeline : wame.Pipeline
             The rendering pipeline to switch to
+        
+        Raises
+        ------
+        RuntimeError
+            If the pipeline tries to switch during runtime
         '''
 
-        if self.scene and self.scene._first_elapsed:
+        if self._scene and self._scene._first_elapsed:
             error:str = "Switching the rendering pipeline during the game loop is not supported"
             raise RuntimeError(error)
 
         self._pipeline = pipeline
 
         if pipeline == Pipeline.PYGAME:
-            self.screen = pygame.display.set_mode(self._size.to_tuple(), pygame.HWSURFACE | pygame.DOUBLEBUF, display=self._display, vsync=self.settings.vsync)
+            self._screen = pygame.display.set_mode(self._size.to_tuple(), pygame.HWSURFACE | pygame.DOUBLEBUF, display=self._display, vsync=self.settings.vsync)
         else:
-            self.screen = pygame.display.set_mode(self._size.to_tuple(), pygame.HWSURFACE | pygame.DOUBLEBUF | pygame.OPENGL, display=self._display, vsync=self.settings.vsync)
+            self._screen = pygame.display.set_mode(self._size.to_tuple(), pygame.HWSURFACE | pygame.DOUBLEBUF | pygame.OPENGL, display=self._display, vsync=self.settings.vsync)
 
     def set_scene(self, name:str, *args) -> None:
         '''
@@ -350,15 +401,16 @@ class Engine:
         
         Parameters
         ----------
-        name : `str`
+        name : str
             The unique name of the scene to switch to (must be previously registered)
-        args : `Any`
+        args : Any
             Any data you wish to pass to the scene instance
         
         Raises
         ------
-        `wame.UniqueNameNotFound`
-            If the name does not exist
+        RuntimeError
+            - If a scene with the name doesn't exist
+            - If the desired scene is already set as the active scene
         '''
         
         if name not in self.scenes:
@@ -373,8 +425,32 @@ class Engine:
             self.scene._cleanup()
             del self.scene
 
-        self.scene = self.scenes[name](self, *args)
-        self.scene._first()
+        self._scene = self._scenes[name](self, *args)
+        self._scene._first()
+
+        self._fixed_update_accumulator = 0.0
+        self._fixed_update_last = time.perf_counter()
+
+    def set_update_interval(self, interval:Union[Interval, float]) -> None:
+        '''
+        Set the amount of time (in seconds) that has to elapse before a fixed update call to a `Scene` is called
+        
+        Parameters
+        ----------
+        interval : wame.common.interval.Interval | float
+            The amount of seconds to elapse for each fixed update call - `Engine` default is `60Hz`
+        
+        Raises
+        ------
+        RuntimeError
+            If trying to switch interval timing during the game loop
+        '''
+
+        if self.scene and self.scene._first_elapsed:
+            error:str = "Switching update intervals during the game loop is not supported"
+            raise RuntimeError(error)
+
+        self._fixed_update_interval = interval
 
     def start(self) -> None:
         '''
@@ -386,7 +462,7 @@ class Engine:
 
         Raises
         ------
-        `wame.SceneNotSet`
+        RuntimeError
             If the engine is started without a scene registered and set
         '''
         

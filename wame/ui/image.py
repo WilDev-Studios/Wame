@@ -14,11 +14,22 @@ class Image(Renderable):
 
     def __init__(self, parent:Frame, image:pygame.Surface, y_flipped:bool=False) -> None:
         """
+        Instantiate a new image
+
+        Parameters
+        ----------
+        parent : wame.ui.frame.Frame
+            The frame to set this child image's parent to
+        image : pygame.Surface
+            The image/surface to render
+        y_flipped : bool
+            Flips the position and orientation based on `OpenGL` context
 
         Info
         ----
         The `y_flipped` variable is only needed if you are using the `OPENGL` `Pipeline` and this object is upside down based on your `OpenGL` context.
         """
+
         super().__init__(parent._engine)
 
         parent.add_child(self)
@@ -114,6 +125,15 @@ class Image(Renderable):
             child.ask_render()
 
     def set_pixel_position(self, position:IntVector2) -> None:
+        '''
+        Set the exact pixel position of this object
+        
+        Parameters
+        ----------
+        position : wame.vector.xy.IntVector2
+            The exact position of this object from the top-left point
+        '''
+
         position = position if isinstance(position, IntVector2) else IntVector2.from_tuple(position)
         position.x += self._parent.position.x
         position.y += self._parent.position.y
@@ -121,6 +141,20 @@ class Image(Renderable):
         self.position = position
     
     def set_scaled_position(self, position:FloatVector2) -> None:
+        '''
+        Set the scaled position of this object
+        
+        Parameters
+        ----------
+        position : wame.vector.xy.FloatVector2
+            The scaled position of this object from the top-left point
+        
+        Raises
+        ------
+        ValueError
+            If the provided positional values exceed `0`-`1`
+        '''
+
         position = position if isinstance(position, FloatVector2) else FloatVector2.from_tuple(position)
 
         if position.x > 1 or position.x < 0 or position.y > 1 or position.y < 0:
@@ -134,5 +168,14 @@ class Image(Renderable):
         self.position = newPosition
     
     def set_image(self, image:pygame.Surface) -> None:
+        '''
+        Set the image of this object
+        
+        Parameters
+        ----------
+        image : pygame.Surface
+            The image/surface to set
+        '''
+        
         self.image = image
         self._render_image()

@@ -1,9 +1,8 @@
 # Common
 Contains commonly used functionality that many developers would need at some point. `Wame` takes care of this for you.
-- So far, only contains `Keys`, but this may change in the future.
 
 ## Keys
-Defined in `wame.common.keys`, it contains the following:
+Defined in `wame.common.keys`:
 - `KEYS`: A `keycode: modifiers` (`KC: MOD`) mapping of keyboard keys.
 - Conditional Methods:
     - `is_char`: Checks if the provided `KC: MOD` mapping equates to a character on the common `WASD` keyboard.
@@ -14,6 +13,11 @@ Defined in `wame.common.keys`, it contains the following:
     - `is_upper`: Checks if the provided `KC: MOD` mapping equates to a uppercase letter.
 
 The `KEYS` mapping is particularly helpful with text input. It takes any `keycode: modifiers` combination and returns the appropriate, correct character typed, without unnecessary, bloated `if` or `match` statements.
+
+## Intervals
+Defined in `wame.common.interval`:
+- `Interval`, an object containing very common `?/sec` interval values, like `30Hz`, `60Hz`, `120Hz`, etc.
+- Particularly helpful in `Engine` `set_update_interval`
 
 ## Example Programs
 ```python
@@ -48,4 +52,8 @@ return is_upper(keycode, modifiers)
 return is_symbol(keycode, modifiers)
 
 # Etc.
+```
+```python
+# Set `Scene` fixed update interval
+engine.set_update_interval(Interval.HZ_60)
 ```

@@ -1,17 +1,51 @@
 # Changelog
 - **NOTE**: `Wame`'s development status is still in `Beta`. Many breaking changes will occur until our stable `1.0.0` release.
 
-## Version 0.4.1 (Not Released)
+## Version 0.5.0
 This is here to keep track of all changes before the release - to address expectations.
 
 ### Breaking Changes
 - Removal of `Scene` `on_quit` method (as `on_cleanup` is used here).
+- Removal of `TABBED_FPS` `Settings` attribute.
+- `Engine` constructor parameter `icon_filepath` changed to `icon` and instead takes a `pygame.Surface` than a `str` filepath.
 
 ### Additions
-...
+- Provided complete documentation to all objects not documented previously.
+- Joystick support for console devices, like controllers.
+- Custom user events as `Pygame` allows.
+- Additional `Scene` event dispatch methods:
+    - `on_joy_axis_motion`
+    - `on_joy_button_down`
+    - `on_joy_button_up`
+    - `on_joy_device_added`
+    - `on_joy_device_removed`
+    - `on_joy_hat_motion`
+    - `on_user_event`
+    - `on_window_close`
+    - `on_window_display_changed`
+    - `on_window_focus_gained`
+    - `on_window_focus_lost`
+    - `on_window_hidden`
+    - `on_window_maximized`
+    - `on_window_minimized`
+    - `on_window_mouse_enter`
+    - `on_window_mouse_leave`
+    - `on_window_moved`
+    - `on_window_resize`
+    - `on_window_restored`
+    - `on_window_shown`
+- New `Interval` object under the `wame.common` module. Contains commonly used time durations (useful for `Engine.set_update_interval` with fixed updates).
+- New `Scene` `on_fixed_update` that updates every configured interval, default `60Hz` (60 times/second). Edit with `Engine`.`set_update_interval`.
+- New `Engine` constructor `settings_persistent` parameter. Allows developers to custom save/load game settings if they desire.
 
 ### Fixes
-...
+- Typos in existed documentation has been fixed.
+- False errors raised when updating runtime `Engine` attributes (`Pipeline` and *`update_interval` values) before a `Scene` was ran.
+- Public `Engine` attributes now cannot be edited, only referenced.
+- Incorrect error types in documentation `Raises` sections.
+- Referenced errors in documentation never had an actual error raise possible.
+- `IntVector3` `cross` can no longer take `FloatVector3` values.
+- `Settings` updated a local screen object instead of the `Engine`.
 
 ## Version 0.4.0
 Released `May 5th, 2025`
@@ -75,14 +109,14 @@ No changelog recorded.
 ## Version 0.0.1 (YANKED)
 Released `July 11th, 2024`
 
-No changelog recorded.
+No changelog recorded - Served as a PyPI module test version with early source code
 
 ## Version 0.0.1.dev2 (PRERELEASE)
 Released `July 11th, 2024`
 
-No changelog recorded.
+No changelog recorded - Served as a PyPI module test version with early source code
 
 ## Version 0.0.1.dev1 (PRERELEASE)
 Released `July 11th, 2024`
 
-No changelog recorded.
+No changelog recorded - Served as a PyPI module test version with early source code

@@ -16,11 +16,26 @@ class Text(Renderable):
 
     def __init__(self, parent:Frame, text:str, color:ColorRGBA, font:pygame.font.Font, y_flipped:bool=False) -> None:
         """
+        Instantiate a Text object
 
+        Parameters
+        ----------
+        parent : wame.ui.frame.Frame
+            The frame that will act as this child's parent
+        text : str
+            The raw text that will be originally displayed
+        color : wame.color.rgb.ColorRGBA
+            The color of the text
+        font : pygame.font.Font
+            The font of the text
+        y_flipped : bool
+            Flips the position and orientation based on `OpenGL` context
+        
         Info
         ----
         The `y_flipped` variable is only needed if you are using the `OPENGL` `Pipeline` and this object is upside down based on your `OpenGL` context.
         """
+
         super().__init__(parent._engine)
 
         color = color if isinstance(color, ColorRGBA) else ColorRGBA.from_tuple(color)
@@ -65,6 +80,24 @@ class Text(Renderable):
             glBindTexture(GL_TEXTURE_2D, 0)
 
     def add_color(self, name:str, color:ColorRGBA, overwrite:bool=False) -> None:
+        """
+        Register a color with this object
+        
+        Parameters
+        ----------
+        name : str
+            The unique name for this color
+        color : wame.color.rgb.ColorRGBA
+            The color to register
+        overwrite : bool
+            If this already exists, if it's ok to overwrite
+        
+        Raises
+        ------
+        ValueError
+            If the unique name already exists
+        """
+
         if name in self._colors and not overwrite:
             error:str = f"Color with name {name} is already registered as a color"
             raise ValueError(error)
@@ -72,6 +105,22 @@ class Text(Renderable):
         self._colors[name] = color if isinstance(color, ColorRGBA) else ColorRGBA.from_tuple(color)
 
     def add_font(self, name:str, font:pygame.font.Font) -> None:
+        """
+        Register a font with this object
+        
+        Parameters
+        ----------
+        name : str
+            The unique name for this font
+        font : pygame.font.Font
+            The font to register
+
+        Raises
+        ------
+        ValueError
+            If the unique name already exists
+        """
+        
         if name in self._fonts:
             error:str = f"Font with name {name} is already registered as a font"
             raise ValueError(error)
@@ -145,6 +194,20 @@ class Text(Renderable):
             child.ask_render()
 
     def set_color(self, name:str) -> None:
+        '''
+        Set the color of this text from a registered name
+
+        Parameters
+        ----------
+        name : str
+            The unique name previously registered to a color
+        
+        Raises
+        ------
+        ValueError
+            If a color with the desired name doesn't exist
+        '''
+
         if name not in self._colors:
             error:str = f"Color with name {name} is not registered as a color"
             raise ValueError(error)
@@ -153,6 +216,20 @@ class Text(Renderable):
         self._render_text()
     
     def set_font(self, name:str) -> None:
+        '''
+        Set the font of this text from a registered name
+        
+        Parameters
+        ----------
+        name : str
+            The unique name previously registered to a font
+        
+        Raises
+        ------
+        ValueError
+            If the unique name does not exist
+        '''
+        
         if name not in self._fonts:
             error:str = f"Font with name {name} is not registered as a font"
             raise ValueError(error)
@@ -161,6 +238,15 @@ class Text(Renderable):
         self._render_text()
     
     def set_pixel_position(self, position:IntVector2) -> None:
+        '''
+        Set the exact pixel position of this object
+        
+        Parameters
+        ----------
+        position : wame.vector.xy.IntVector2
+            The exact position to place the top-left of this object
+        '''
+
         position = position if isinstance(position, IntVector2) else IntVector2.from_tuple(position)
         position.x += self._parent.position.x
         position.y += self._parent.position.y
@@ -168,6 +254,20 @@ class Text(Renderable):
         self.position = position
     
     def set_scaled_position(self, position:FloatVector2) -> None:
+        '''
+        Set the scaled pixel position of this object
+        
+        Parameters
+        ----------
+        position : wame.vector.xy.FloatVector2
+            The scaled position to place the top-left of this object
+        
+        Raises
+        ------
+        ValueError
+            If the provided positional values exceed `0`-`1`
+        '''
+        
         position = position if isinstance(position, FloatVector2) else FloatVector2.from_tuple(position)
 
         if position.x > 1 or position.x < 0 or position.y > 1 or position.y < 0:
@@ -181,5 +281,14 @@ class Text(Renderable):
         self.position = newPosition
     
     def set_text(self, text:str) -> None:
+        '''
+        Set the text of this object
+        
+        Parameters
+        ----------
+        text : str
+            The raw text to set
+        '''
+        
         self.raw_text = text
         self._render_text()

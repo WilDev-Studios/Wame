@@ -16,7 +16,4 @@ engine.settings.antialiasing = True/False
 
 # Edit Max Frames Per Second
 engine.settings.max_fps = 165
-
-# Edit Tabbed/Out-of-Focus Frames Per Second
-engine.settings.tabbed_fps = 30
 ```

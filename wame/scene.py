@@ -39,7 +39,19 @@ class Scene(ABC):
 
     def _check_events(self) -> None:
         for event in pygame.event.get():
-            if event.type == pygame.KEYDOWN:
+            if event.type == pygame.JOYAXISMOTION:
+                self.on_joy_axis_motion(event.joy, event.axis, event.value)
+            elif event.type == pygame.JOYBUTTONDOWN:
+                self.on_joy_button_down(event.joy, event.button)
+            elif event.type == pygame.JOYBUTTONUP:
+                self.on_joy_button_up(event.joy, event.button)
+            elif event.type == pygame.JOYDEVICEADDED:
+                self.on_joy_device_added(event.device_index)
+            elif event.type == pygame.JOYDEVICEREMOVED:
+                self.on_joy_device_removed(event.device_index)
+            elif event.type == pygame.JOYHATMOTION:
+                self.on_joy_hat_motion(event.joy, event.hat, IntVector2.from_tuple(event.value))
+            elif event.type == pygame.KEYDOWN:
                 self.on_key_pressed(event.key, event.mod)
             elif event.type == pygame.KEYUP:
                 self.on_key_released(event.key, event.mod)
@@ -67,12 +79,34 @@ class Scene(ABC):
                 self.on_mouse_wheel_scroll(mousePosition, event.y)
             elif event.type == pygame.QUIT:
                 self.engine._running = False
-
-                self.on_quit()
+            elif event.type == pygame.USEREVENT:
+                self.on_user_event(event)
+            elif event.type == pygame.WINDOWCLOSE:
+                self.on_window_close()
+            elif event.type == pygame.WINDOWDISPLAYCHANGED:
+                self.on_window_display_changed()
             elif event.type == pygame.WINDOWENTER:
-                self.engine._set_fps = self.engine.settings.max_fps
+                self.on_window_mouse_enter()
+            elif event.type == pygame.WINDOWFOCUSGAINED:
+                self.on_window_focus_gained()
+            elif event.type == pygame.WINDOWFOCUSLOST:
+                self.on_window_focus_lost()
+            elif event.type == pygame.WINDOWHIDDEN:
+                self.on_window_hidden()
             elif event.type == pygame.WINDOWLEAVE:
-                self.engine._set_fps = self.engine.settings.tabbed_fps
+                self.on_window_mouse_leave()
+            elif event.type == pygame.WINDOWMAXIMIZED:
+                self.on_window_maximized()
+            elif event.type == pygame.WINDOWMINIMIZED:
+                self.on_window_minimized()
+            elif event.type == pygame.WINDOWMOVED:
+                self.on_window_moved(IntVector2(event.x, event.y))
+            elif event.type == pygame.WINDOWRESIZED:
+                self.on_window_resize(IntVector2.from_tuple(event.size))
+            elif event.type == pygame.WINDOWRESTORED:
+                self.on_window_restored()
+            elif event.type == pygame.WINDOWSHOWN:
+                self.on_window_shown()
     
     def _check_keys(self) -> None:
         keys:pygame.key.ScancodeWrapper = pygame.key.get_pressed()
@@ -90,7 +124,8 @@ class Scene(ABC):
     def _first(self) -> None:
         self.on_first()
 
-        self._first_elapsed = True
+    def _fixed_update(self) -> None:
+        self.on_fixed_update()
 
     def _render(self) -> None:
         if self.engine._pipeline == Pipeline.PYGAME:
@@ -105,6 +140,9 @@ class Scene(ABC):
         self.engine._deltaTime = self.engine._clock.tick(self.engine._set_fps) / 1000.0
 
     def _update(self) -> None:
+        if not self._first_elapsed:
+            self._first_elapsed = True
+
         self.on_update()
     
     def on_cleanup(self) -> None:
@@ -141,6 +179,140 @@ class Scene(ABC):
         ```
         '''
 
+        ...
+
+    def on_fixed_update(self) -> None:
+        '''
+        Code below should be executed every configurable, elapsed duration before objects are rendered to provide updates to instance states.
+
+        Info
+        ----
+        This only runs on a certain configured duration, by default 60 times/second. If you wish to run this every frame, use `on_update`.
+
+        Tip
+        ---
+        If you wish to change the duration of the fixed update, use `engine.set_update_interval`.
+
+        Example
+        -------
+        ```python
+        class MyScene(wame.Scene):
+            def __init__(self, engine) -> None:
+                super().__init__(engine)
+            
+            def on_fixed_update(self) -> None:
+                ... # Update positions, text, etc.
+        ```
+        '''
+        
+        ...
+
+    def on_joy_axis_motion(self, stick:int, axis:int, position:float) -> None:
+        '''
+        Code below should be executed when a joystick's axis moves
+        
+        Example
+        -------
+        ```python
+        class MyScene(wame.Scene):
+            def __init__(self, engine) -> None:
+                super().__init__(engine)
+            
+            def on_joy_axis_motion(self, stick:int, axis:int, position:float) -> None:
+                ...
+        ```
+        '''
+        
+        ...
+    
+    def on_joy_button_down(self, stick:int, button:int) -> None:
+        '''
+        Code below should be executed when a joystick's button gets pressed
+        
+        Example
+        -------
+        ```python
+        class MyScene(wame.Scene):
+            def __init__(self, engine) -> None:
+                super().__init__(engine)
+            
+            def on_joy_button_down(self, stick:int, button:int) -> None:
+                ...
+        ```
+        '''
+        
+        ...
+    
+    def on_joy_button_up(self, stick:int, button:int) -> None:
+        '''
+        Code below should be executed when a joystick's button gets released
+        
+        Example
+        -------
+        ```python
+        class MyScene(wame.Scene):
+            def __init__(self, engine) -> None:
+                super().__init__(engine)
+            
+            def on_joy_button_up(self, stick:int, button:int) -> None:
+                ...
+        ```
+        '''
+        
+        ...
+    
+    def on_joy_device_added(self, device:int) -> None:
+        '''
+        Code below should be executed when a new joystick device is added
+        
+        Example
+        -------
+        ```python
+        class MyScene(wame.Scene):
+            def __init__(self, engine) -> None:
+                super().__init__(engine)
+            
+            def on_joy_device_added(self, device:int) -> None:
+                ...
+        ```
+        '''
+        
+        ...
+    
+    def on_joy_device_removed(self, device:int) -> None:
+        '''
+        Code below should be executed when an old joystick device is removed
+        
+        Example
+        -------
+        ```python
+        class MyScene(wame.Scene):
+            def __init__(self, engine) -> None:
+                super().__init__(engine)
+            
+            def on_joy_device_removed(self, device:int) -> None:
+                ...
+        ```
+        '''
+        
+        ...
+    
+    def on_joy_hat_motion(self, stick:int, hat:int, position:IntVector2) -> None:
+        '''
+        Code below should be executed when a joystick's hat/D-Pad moves
+        
+        Example
+        -------
+        ```python
+        class MyScene(wame.Scene):
+            def __init__(self, engine) -> None:
+                super().__init__(engine)
+            
+            def on_joy_hat_motion(self, stick:int, hat:int, position:wame.IntVector2) -> None:
+                ...
+        ```
+        '''
+        
         ...
 
     def on_key_pressed(self, key:int, mods:int) -> None:
@@ -267,6 +439,258 @@ class Scene(ABC):
                     print(f"Scroll wheel moved up @ {mouse_position}!")
                 else:
                     print(f"Scroll wheel moved down @ {mouse_position}!")
+        ```
+        '''
+
+        ...
+
+    def on_user_event(self, event:pygame.event.Event) -> None:
+        '''
+        Code below should be executed when a custom user event is called
+        
+        Example
+        -------
+        ```python
+        class MyScene(wame.Scene):
+            def __init__(self, engine) -> None:
+                super().__init__(engine)
+            
+            def on_user_event(self, event:pygame.event.Event) -> None:
+                ...
+        ```
+        '''
+
+        ...
+
+    def on_window_close(self) -> None:
+        '''
+        Code below should be executed when the window is requested to close
+        
+        Example
+        -------
+        ```python
+        class MyScene(wame.Scene):
+            def __init__(self, engine) -> None:
+                super().__init__(engine)
+            
+            def on_window_close(self) -> None:
+                ...
+        ```
+        '''
+
+        ...
+
+    def on_window_display_changed(self) -> None:
+        '''
+        Code below should be executed when the window's display/monitor changes
+        
+        Example
+        -------
+        ```python
+        class MyScene(wame.Scene):
+            def __init__(self, engine) -> None:
+                super().__init__(engine)
+            
+            def on_window_display_changed(self) -> None:
+                ...
+        ```
+        '''
+
+        ...
+
+    def on_window_focus_gained(self) -> None:
+        '''
+        Code below should be executed when the window gains focus
+        
+        Example
+        -------
+        ```python
+        class MyScene(wame.Scene):
+            def __init__(self, engine) -> None:
+                super().__init__(engine)
+            
+            def on_window_focus_gained(self) -> None:
+                ...
+        ```
+        '''
+
+        ...
+
+    def on_window_focus_lost(self) -> None:
+        '''
+        Code below should be executed when the window loses focus
+        
+        Example
+        -------
+        ```python
+        class MyScene(wame.Scene):
+            def __init__(self, engine) -> None:
+                super().__init__(engine)
+            
+            def on_window_focus_lost(self) -> None:
+                ...
+        ```
+        '''
+
+        ...
+
+    def on_window_hidden(self) -> None:
+        '''
+        Code below should be executed when the window is hidden
+        
+        Example
+        -------
+        ```python
+        class MyScene(wame.Scene):
+            def __init__(self, engine) -> None:
+                super().__init__(engine)
+            
+            def on_window_hidden(self) -> None:
+                ...
+        ```
+        '''
+
+        ...
+
+    def on_window_maximized(self) -> None:
+        '''
+        Code below should be executed when the window gets maximized
+        
+        Example
+        -------
+        ```python
+        class MyScene(wame.Scene):
+            def __init__(self, engine) -> None:
+                super().__init__(engine)
+            
+            def on_window_maximized(self) -> None:
+                ...
+        ```
+        '''
+
+        ...
+
+    def on_window_minimized(self) -> None:
+        '''
+        Code below should be executed when the window gets minimized
+        
+        Example
+        -------
+        ```python
+        class MyScene(wame.Scene):
+            def __init__(self, engine) -> None:
+                super().__init__(engine)
+            
+            def on_window_minimized(self) -> None:
+                ...
+        ```
+        '''
+
+        ...
+
+    def on_window_mouse_enter(self) -> None:
+        '''
+        Code below should be executed when the mouse enters the window
+        
+        Example
+        -------
+        ```python
+        class MyScene(wame.Scene):
+            def __init__(self, engine) -> None:
+                super().__init__(engine)
+            
+            def on_window_mouse_enter(self) -> None:
+                ...
+        ```
+        '''
+
+        ...
+
+    def on_window_mouse_leave(self) -> None:
+        '''
+        Code below should be executed when the mouse leaves the window
+        
+        Example
+        -------
+        ```python
+        class MyScene(wame.Scene):
+            def __init__(self, engine) -> None:
+                super().__init__(engine)
+            
+            def on_window_mouse_leave(self) -> None:
+                ...
+        ```
+        '''
+
+        ...
+    
+    def on_window_moved(self, position:IntVector2) -> None:
+        '''
+        Code below should be executed when the window moves
+        
+        Example
+        -------
+        ```python
+        class MyScene(wame.Scene):
+            def __init__(self, engine) -> None:
+                super().__init__(engine)
+            
+            def on_window_moved(self, position:wame.IntVector2) -> None:
+                ...
+        ```
+        '''
+
+        ...
+
+    def on_window_resize(self, size:IntVector2) -> None:
+        '''
+        Code below should be executed when the window is resized
+        
+        Example
+        -------
+        ```python
+        class MyScene(wame.Scene):
+            def __init__(self, engine) -> None:
+                super().__init__(engine)
+            
+            def on_window_resize(self, size:wame.IntVector2) -> None:
+                ... # Edit OpenGL viewport, etc.
+        ```
+        '''
+
+        ...
+
+    def on_window_restored(self) -> None:
+        '''
+        Code below should be executed when the window is restored from a minimized or maximized state
+        
+        Example
+        -------
+        ```python
+        class MyScene(wame.Scene):
+            def __init__(self, engine) -> None:
+                super().__init__(engine)
+            
+            def on_window_restored(self) -> None:
+                ...
+        ```
+        '''
+
+        ...
+
+    def on_window_shown(self) -> None:
+        '''
+        Code below should be executed when window becomes visible
+        
+        Example
+        -------
+        ```python
+        class MyScene(wame.Scene):
+            def __init__(self, engine) -> None:
+                super().__init__(engine)
+            
+            def on_window_shown(self) -> None:
+                ...
         ```
         '''
 

@@ -21,11 +21,11 @@ class Frame(Renderable):
         
         Parameters
         ----------
-        parent : `wame.ui.frame.Frame`
+        parent : wame.ui.frame.Frame
             The parent of this frame
-        color : `wame.color.rgb.ColorRGBA`
+        color : wame.color.rgb.ColorRGBA
             The background color of the frame
-        y_flipped : `bool`
+        y_flipped : bool
             If it should be rendered with the Y-axis flipped - May be necessary depending on your OpenGL setup
         
         Note
@@ -119,13 +119,42 @@ class Frame(Renderable):
             child.ask_render()
     
     def set_border(self, color:ColorRGBA, width:int) -> None:
+        '''
+        Set the border of this object
+        
+        Parameters
+        ----------
+        color : wame.color.rgb.ColorRGBA
+            The color to set the border to
+        width : int
+            The width of the border
+        '''
+
         self._border_color = color if isinstance(color, ColorRGBA) else ColorRGBA.from_tuple(color)
         self._border_width = width
 
     def set_color(self, color:ColorRGBA) -> None:
+        '''
+        Set the color of this object
+        
+        Parameters
+        ----------
+        color : wame.color.rgb.ColorRGBA
+            The color of this object
+        '''
+
         self._color = color if isinstance(color, ColorRGBA) else ColorRGBA.from_tuple(color)
 
     def set_pixel_position(self, position:IntVector2) -> None:
+        '''
+        Set the exact pixel position of this object
+        
+        Parameters
+        ----------
+        position : wame.vector.xy.IntVector2
+            The exact position to place the top-left of this object
+        '''
+
         position = position if isinstance(position, IntVector2) else IntVector2.from_tuple(position)
 
         if self._parent:
@@ -135,9 +164,32 @@ class Frame(Renderable):
         self.position = position
 
     def set_pixel_size(self, size:IntVector2) -> None:
+        '''
+        Set the exact pixel size of this object
+        
+        Parameters
+        ----------
+        size : wame.vector.xy.IntVector2
+            The exact size of this object
+        '''
+
         self.size = size if isinstance(size, IntVector2) else IntVector2.from_tuple(size)
 
     def set_scaled_position(self, position:FloatVector2) -> None:
+        '''
+        Set the scaled position of this object
+        
+        Parameters
+        ----------
+        position : wame.vector.xy.FloatVector2
+            The scaled position of this object from the top-left point
+        
+        Raises
+        ------
+        ValueError
+            If the provided positional values exceed `0`-`1`
+        '''
+
         position = position if isinstance(position, FloatVector2) else FloatVector2.from_tuple(position)
 
         if position.x > 1 or position.x < 0 or position.y > 1 or position.y < 0:
@@ -156,6 +208,20 @@ class Frame(Renderable):
         self.position = newPosition
     
     def set_scaled_size(self, size:IntVector2) -> None:
+        '''
+        Set the exact pixel size of this object
+        
+        Parameters
+        ----------
+        size : wame.vector.xy.IntVector2
+            The exact size of this object
+        
+        Raises
+        ------
+        ValueError
+            If the provided size values exceed `0`-`1`
+        '''
+        
         size = size if isinstance(size, FloatVector2) else FloatVector2.from_tuple(size)
 
         if size.x > 1 or size.x < 0 or size.y > 1 or size.y < 0:

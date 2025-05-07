@@ -11,12 +11,18 @@ class ColorRGB:
         
         Parameters
         ----------
-        r : `int`
+        r : int
             The R (red) value (0-255)
-        g : `int`
+        g : int
             The G (green) value (0-255)
-        b : `int`
+        b : int
             The B (blue) value (0-255)
+        
+        Raises
+        ------
+        ValueError
+            - If any color value is not an integer
+            - If any color value is less than `0` or more than `255`
         '''
 
         def color_not_int(color:str) -> NoReturn:
@@ -63,16 +69,25 @@ class ColorRGB:
         
         Parameters
         ----------
-        rgb : `tuple[int, int, int]`
+        rgb : tuple[int, int, int]
             The R, G, and B values
         
         Returns
         -------
-        color : `wame.color.rgb.ColorRGB`
+        color : wame.color.rgb.ColorRGB
             New `ColorRGB` object from the tuple
+        
+        Raises
+        ------
+        ValueError
+            If there's not 3 values within the provided tuple
         '''
 
-        return ColorRGB(rgb[0], rgb[1], rgb[2])
+        if len(rgb) != 3:
+            error:str = "RGB tuple must contain 3 values"
+            raise ValueError(error)
+
+        return cls(rgb[0], rgb[1], rgb[2])
     
     def normalized(self) -> tuple[float, float, float]:
         '''
@@ -80,7 +95,7 @@ class ColorRGB:
         
         Returns
         -------
-        rgb : `tuple[float, float, float]`
+        rgb : tuple[float, float, float]
             The normalized RGB values
         '''
 
@@ -92,7 +107,7 @@ class ColorRGB:
         
         Returns
         -------
-        color : `tuple[int, int, int]`
+        color : tuple[int, int, int]
             The R, G, and B values in a tuple
         '''
 
@@ -107,13 +122,13 @@ class ColorRGBA(ColorRGB):
         
         Parameters
         ----------
-        r : `int`
+        r : int
             The R (red) value (0-255)
-        g : `int`
+        g : int
             The G (green) value (0-255)
-        b : `int`
+        b : int
             The B (blue) value (0-255)
-        a : `int`
+        a : int
             The A (alpha) value (0-1)
         '''
 
@@ -139,14 +154,23 @@ class ColorRGBA(ColorRGB):
         
         Parameters
         ----------
-        rgba : `tuple[int, int, int, float]`
+        rgba : tuple[int, int, int, float]
             The R, G, B, and (optionally) A values
         
         Returns
         -------
-        color : `wame.color.rgb.ColorRGBA`
+        color : wame.color.rgb.ColorRGBA
             New `ColorRGBA` object from the tuple - If `A` is omitted, default is `1.0`
+        
+        Raises
+        ------
+        ValueError
+            If the provided tuple doesn't contain 3-4 characters (RGB or RGBA)
         '''
+
+        if len(rgba) not in [3, 4]:
+            error:str = "RGBA object must contain 3-4 values only"
+            raise ValueError(error)
 
         try:
             return ColorRGBA(rgba[0], rgba[1], rgba[2], rgba[3])
@@ -159,7 +183,7 @@ class ColorRGBA(ColorRGB):
         
         Returns
         -------
-        rgba : `tuple[float, float, float, float]`
+        rgba : tuple[float, float, float, float]
             The normalized RGBA values
         '''
 
@@ -171,7 +195,7 @@ class ColorRGBA(ColorRGB):
         
         Returns
         -------
-        color : `tuple[int, int, int, float]`
+        color : tuple[int, int, int, float]
             The R, G, B, and A values in a tuple
         '''
 

@@ -12,6 +12,15 @@ class Button(Renderable):
     '''UI Button Object'''
 
     def __init__(self, parent:Frame) -> None:
+        '''
+        Instantiate a new button
+        
+        Parameters
+        ----------
+        parent : wame.ui.frame.Frame
+            The parent frame that this button will be a child to
+        '''
+        
         super().__init__(parent._engine)
 
         parent.add_child(self)
@@ -24,6 +33,15 @@ class Button(Renderable):
         self._unhover_callback:Callable = None
 
     def check_click(self, position:IntVector2) -> None:
+        '''
+        Check to see if the mouse clicked this object, and handles appropriately if so
+        
+        Parameters
+        ----------
+        position : wame.vector.xy.IntVector2
+            The position of the mouse
+        '''
+        
         if not self.rect.collidepoint(position.to_tuple()):
             return
         
@@ -33,6 +51,15 @@ class Button(Renderable):
         self._click_callback()
     
     def check_hover(self, position:IntVector2) -> None:
+        '''
+        Check to see if the mouse is hovering over this object, and handles appropriately if so
+        
+        Parameters
+        ----------
+        position : wame.vector.xy.IntVector2
+            The position of the mouse
+        '''
+        
         if self.rect.collidepoint(position.to_tuple()):
             if not self._hovering:
                 self._hovering = True
@@ -51,12 +78,39 @@ class Button(Renderable):
             child.ask_render()
 
     def set_click_callback(self, func:Callable[[], None]) -> None:
+        '''
+        Set the callback for when this object is clicked
+        
+        Parameters
+        ----------
+        func : typing.Callable[[], None]
+            The callback method to execute when clicked
+        '''
+
         self._click_callback = func
     
     def set_hover_callback(self, func:Callable[[], None]) -> None:
+        '''
+        Set the callback for when this object is hovered over
+        
+        Parameters
+        ----------
+        func : typing.Callable[[], None]
+            The callback method to execute when hovered over
+        '''
+        
         self._hover_callback = func
 
     def set_pixel_position(self, position:IntVector2) -> None:
+        '''
+        Set the exact pixel position of this object
+        
+        Parameters
+        ----------
+        position : wame.vector.xy.IntVector2
+            The exact position of this object from the top-left point
+        '''
+
         position = position if isinstance(position, IntVector2) else IntVector2.from_tuple(position)
 
         if self._parent:
@@ -66,9 +120,27 @@ class Button(Renderable):
         self.position = position
 
     def set_pixel_size(self, size:IntVector2) -> None:
+        '''
+        Set the exact pixel size of this object
+        
+        Parameters
+        ----------
+        size : wame.vector.xy.IntVector2
+            The exact size of this object
+        '''
+
         self.size = size if isinstance(size, IntVector2) else IntVector2.from_tuple(size)
 
     def set_scaled_position(self, position:FloatVector2) -> None:
+        '''
+        Set the scaled position of this object
+        
+        Parameters
+        ----------
+        position : wame.vector.xy.FloatVector2
+            The scaled position of this object from the top-left point
+        '''
+
         position = position if isinstance(position, FloatVector2) else FloatVector2.from_tuple(position)
 
         if position.x > 1 or position.x < 0 or position.y > 1 or position.y < 0:
@@ -81,6 +153,15 @@ class Button(Renderable):
         )
     
     def set_scaled_size(self, size:IntVector2) -> None:
+        '''
+        Set the scaled size of this object
+        
+        Parameters
+        ----------
+        size : wame.vector.xy.IntVector2
+            The scaled size of this object
+        '''
+        
         size = size if isinstance(size, FloatVector2) else FloatVector2.from_tuple(size)
 
         if size.x > 1 or size.x < 0 or size.y > 1 or size.y < 0:
@@ -93,4 +174,13 @@ class Button(Renderable):
         )
     
     def set_unhover_callback(self, func:Callable) -> None:
+        '''
+        Set the callback for when this object is no longer hovered over
+        
+        Parameters
+        ----------
+        func : typing.Callable[[], None]
+            The callback method to execute when no longer hovered over
+        '''
+
         self._unhover_callback = func
