@@ -90,6 +90,7 @@ nav:
       - Renderable: pages/api/ui/renderable.md
       - Text: pages/api/ui/text.md
     - Vector:
+      - Base: pages/api/vector/base.md
       - XY: pages/api/vector/xy.md
       - XYZ: pages/api/vector/xyz.md
     - Engine: pages/api/engine.md
