@@ -1,225 +1,439 @@
 from __future__ import annotations
 
+from numpy.typing import NDArray
 from typing import Union
+from wame.vector.base import BaseVector2
 
 import numpy as np
 
-class FloatVector2:
-    '''Vector with 2 Float Values: X and Y'''
+class FloatVector2(BaseVector2):
+    '''2D Float Vector Array.'''
 
-    def __init__(self, x:Union[float, int], y:Union[float, int]) -> None:
+    __slots__ = ("_array",)
+    _array: NDArray[np.float32]
+
+    def __init__(self, x: float, y: float) -> None:
         '''
-        Instantiate a new Vector with float X and Y values
+        Create a new 2D, `float`-based vector array.
         
         Parameters
         ----------
         x : float
-            The X value
+            Coordinate on the X-axis.
         y : float
-            The Y value
-        
-        Raises
-        ------
-        ValueError
-            If any provided arguments are not `float` or `int`
+            Coordinate on the Y-axis.
         '''
 
-        if not isinstance(x, (float, int)) or not isinstance(y, (float, int)):
-            error:str = "XY values must be `float` or `int`"
-            raise ValueError(error)
-        
-        if isinstance(x, int):
-            x = float(x)
-        
-        if isinstance(y, int):
-            y = float(y)
+        self._array:NDArray[np.float32] = np.array([x, y], np.float32)
 
-        self.x:float = x
-        self.y:float = y
+    def __add__(self, other: FloatVector2) -> FloatVector2:
+        if isinstance(other, FloatVector2):
+            return FloatVector2.from_iterable(self._array + other._array)
+        
+        error:str = f"Unsupported operand type(s) for +: `FloatVector2` and `{type(other).__name__}`"
+        raise TypeError(error)
+
+    def __floordiv__(self, scalar: Union[int, float]) -> FloatVector2:
+        if scalar == 0:
+            error:str = "Cannot divide by zero"
+            raise ZeroDivisionError(error)
+        
+        if isinstance(scalar, (int, float)):
+            return FloatVector2.from_iterable(self._array // scalar)
+        
+        error:str = "Can only divide `FloatVector2` by an `int` or `float`"
+        raise TypeError(error)
+
+    def __mul__(self, scalar: float) -> FloatVector2:
+        if isinstance(scalar, (float, int)):
+            return FloatVector2.from_iterable(self._array * scalar)
+        
+        error:str = "Can only multiply `FloatVector2` by a `float` or `int`"
+        raise TypeError(error)
+
+    def __neg__(self) -> FloatVector2:
+        return FloatVector2.from_iterable(-self._array)
+
+    def __rsub__(self, other: FloatVector2) -> FloatVector2:
+        if isinstance(other, FloatVector2):
+            return FloatVector2.from_iterable(other._array - self._array)
+        
+        error:str = f"Unsupported operand type(s) for -: `{type(other).__name__}` and `FloatVector2`"
+        raise TypeError(error)
+
+    def __setitem__(self, index: int, value:float) -> None:
+        if index not in (0, 1):
+            error:str = "Index out of bounds for FloatVector2: valid indices are 0 and 1"
+            raise IndexError(error)
+        
+        self._array[index] = float(value)
+
+    def __sub__(self, other: FloatVector2) -> FloatVector2:
+        if isinstance(other, FloatVector2):
+            return FloatVector2.from_iterable(self._array - other._array)
+        
+        error:str = f"Unsupported operand type(s) for -: `FloatVector2` and `{type(other).__name__}`"
+        raise TypeError(error)
+
+    def __truediv__(self, scalar: Union[int, float]) -> FloatVector2:
+        if scalar == 0:
+            error:str = "Cannot divide by zero"
+            raise ZeroDivisionError(error)
+        
+        if isinstance(scalar, (int, float)):
+            return FloatVector2.from_iterable(self._array / scalar)
     
-    def __add__(self, other:Union[FloatVector2, IntVector2, np.ndarray]) -> FloatVector2:
-        if isinstance(other, FloatVector2) or isinstance(other, IntVector2):
-            return FloatVector2(self.x + other.x, self.y + other.y)
-        
-        if isinstance(other, np.ndarray):
-            return FloatVector2(self.x + other[0], self.y + other[1])
-        
-        raise TypeError(f"Unsupported addition with type {type(other)}")
-    
-    def __eq__(self, other:Union[FloatVector2, IntVector2, np.ndarray]) -> bool:
-        if isinstance(other, FloatVector2) or isinstance(other, IntVector2):
-            return self.to_tuple() == other.to_tuple()
-        
-        if isinstance(other, np.ndarray):
-            return self.to_tuple() == (other[0], other[1])
+        error:str = "Can only divide `FloatVector2` by an `int` or `float`"
+        raise TypeError(error)
 
-    def __hash__(self) -> int:
-        return hash(self.to_tuple())
-
-    def __sub__(self, other:Union[FloatVector2, IntVector2, np.ndarray]) -> FloatVector2:
-        if isinstance(other, FloatVector2) or isinstance(other, IntVector2):
-            return FloatVector2(self.x - other.x, self.y - other.y)
-        
-        if isinstance(other, np.ndarray):
-            return FloatVector2(self.x - other[0], self.y - other[1])
-        
-        raise TypeError(f"Unsupported subtraction with type {type(other)}")
-
-    def __repr__(self) -> str:
-        return f"X: {self.x}, Y: {self.y}"
-    
-    @classmethod
-    def from_tuple(cls, xy:tuple[Union[float, int], Union[float, int]]) -> FloatVector2:
+    def copy(self) -> FloatVector2:
         '''
-        Instantiate a new Vector from a tuple with float X and Y values
+        Copy this vector into another instance of the same vector.
+        
+        Returns
+        -------
+        FloatVector2
+            This vector as another instance.
+        '''
+
+        return FloatVector2(self._array[0], self._array[1])
+
+    def dot(self, other: FloatVector2) -> float:
+        '''
+        Calculate the dot product of this vector with another.
         
         Parameters
         ----------
-        xy : tuple[float | int, float | int]
-            The tuple with the X and Y values
+        other : FloatVector2
+            The other vector to calculate the dot product with.
+        
+        Returns
+        -------
+        float
+            The dot product of these two vectors.
+        '''
+
+        return float(np.dot(self._array, other._array))
+
+    @classmethod
+    def from_iterable(cls, iterable: Union[FloatVector2, IntVector2, np.ndarray[np.float32], tuple[Union[int, float], Union[int, float]], list[Union[int, float]]]) -> FloatVector2:
+        '''
+        Create a new 2D, `float`-based vector array from an iterable with 2 `float` or `int` values.
+        
+        Parameters
+        ----------
+        iterable : FloatVector2 | IntVector2 | numpy.ndarray[numpy.int32] | tuple[int | float, int | float] | list[int | float]
+            The iterable with 3 `float` or `int` values.
+        
+        Returns
+        -------
+        FloatVector2
+            The new 2D, `float`-based vector array.
         
         Raises
         ------
         ValueError
-            - If the provided items in the tuple are not `float` or `int`
-            - If the provided tuple does not contain 2 values
+            If the provided iterable contains more or less than 2 values
         '''
 
-        if len(xy) != 2:
-            error:str = "XY tuple can only contain 2 values"
+        items: tuple[int, int] = tuple(iterable)
+
+        if len(items) != 2:
+            error:str = "Iterable provided must only contain 2 values"
             raise ValueError(error)
+
+        x, y = items        
+        return cls(x, y)
+
+    def normalize(self) -> FloatVector2:
+        '''
+        Normalize this vector.
         
-        return cls(xy[0], xy[1])
+        Returns
+        -------
+        FloatVector2
+            The normalized vector.
+        
+        Raises
+        ------
+        ZeroDivisionError
+            If the magnitude of this vector is 0
+        '''
+
+        mag: float = self.magnitude()
+
+        if mag == 0:
+            error:str = "Cannot normalize a zero-length vector."
+            raise ZeroDivisionError(error)
+        
+        return self / mag
+
+    def to_numpy(self, copy: bool = True) -> NDArray[np.float32]:
+        '''
+        Return this vector as an instance of a `NumPy` array.
+
+        Parameters
+        ----------
+        copy : bool
+            If this method should return a copy of the internal `NumPy` array or the array itself
+
+        Returns
+        -------
+        numpy.ndarray[numpy.int32]
+            This vector as an instance of a `NumPy` array.
+
+        Warning
+        -------
+        If you return the array itself, any changes to that array will change this vector object.
+        '''
+
+        return self._array.copy() if copy else self._array
     
-    def to_numpy(self) -> np.ndarray[np.int32]:
+    def to_tuple(self) -> tuple[int, int]:
         '''
-        Converts this instance of `FloatVector2` into a numpy array
+        Return this vector as a tuple.
         
         Returns
         -------
-        array : numpy.ndarray[numpy.float32]
-            Converted x and Y values
+        tuple[int, int]
+            This vector as a tuple.
         '''
 
-        return np.array([self.x, self.y], dtype=np.float32)
+        return tuple(self._array)
 
-    def to_tuple(self) -> tuple[float, float]:
+    @property
+    def x(self) -> float:
+        '''Coordinate on the X-axis.'''
+        return self._array[0]
+
+    @x.setter
+    def x(self, value: float) -> None:
+        self._array[0] = float(value)
+
+    @property
+    def y(self) -> float:
+        '''Coordinate on the Y-axis.'''
+        return self._array[1]
+    
+    @y.setter
+    def y(self, value: float) -> None:
+        self._array[1] = float(value)
+
+class IntVector2(BaseVector2):
+    '''2D Integer Vector Array.'''
+
+    __slots__ = ("_array",)
+    _array: NDArray[np.int32]
+
+    def __init__(self, x: int, y: int) -> None:
         '''
-        Converts this instance of `FloatVector2` into a `tuple`
-        
-        Returns
-        -------
-        vector : tuple[float, float]
-            Converted x and y values
-        '''
-
-        return (self.x, self.y)
-
-class IntVector2:
-    '''Vector with 2 Integer Values: X and Y'''
-
-    def __init__(self, x:int, y:int) -> None:
-        '''
-        Instantiate a new Vector with integer X and Y values
+        Create a new 2D, `int`-based vector array.
         
         Parameters
         ----------
         x : int
-            The X value
+            Coordinate on the X-axis.
         y : int
-            The Y value
+            Coordinate on the Y-axis.
+        '''
+
+        self._array:NDArray[np.int32] = np.array([x, y], np.int32)
+
+    def __add__(self, other: IntVector2) -> IntVector2:
+        if isinstance(other, IntVector2):
+            return IntVector2.from_iterable(self._array + other._array)
         
-        Raises
-        ------
-        ValueError
-            If any provided arguments are not integers
+        error:str = f"Unsupported operand type(s) for +: `IntVector2` and `{type(other).__name__}`"
+        raise TypeError(error)
+
+    def __floordiv__(self, scalar: float) -> IntVector2:
+        if scalar == 0:
+            error:str = "Cannot divide by zero"
+            raise ZeroDivisionError(error)
+        
+        if isinstance(scalar, (int, float)):
+            return IntVector2.from_iterable(self._array // scalar)
+        
+        error:str = "Can only floor divide `IntVector2` by an `int` or `float`"
+        raise TypeError(error)
+
+    def __mul__(self, scalar: int) -> IntVector2:
+        if isinstance(scalar, int):
+            return IntVector2.from_iterable(self._array * scalar)
+        
+        error:str = "Can only multiply `IntVector2` by an `int`"
+        raise TypeError(error)
+
+    def __neg__(self) -> IntVector2:
+        return IntVector2.from_iterable(-self._array)
+
+    def __rsub__(self, other: IntVector2) -> IntVector2:
+        if isinstance(other, IntVector2):
+            return IntVector2.from_iterable(other._array - self._array)
+        
+        error:str = f"Unsupported operand type(s) for -: `{type(other).__name__}` and `IntVector2`"
+        raise TypeError(error)
+
+    def __setitem__(self, index: int, value:int) -> None:
+        if index not in (0, 1):
+            error:str = "Index out of bounds for IntVector2: valid indices are 0 and 1"
+            raise IndexError(error)
+        
+        self._array[index] = int(value)
+
+    def __sub__(self, other: IntVector2) -> IntVector2:
+        if isinstance(other, IntVector2):
+            return IntVector2.from_iterable(self._array - other._array)
+        
+        error:str = f"Unsupported operand type(s) for -: `IntVector2` and `{type(other).__name__}`"
+        raise TypeError(error)
+
+    def __truediv__(self, scalar: float) -> FloatVector2:
+        '''
+        Warning
+        -------
+        Truly dividing an `int`-based vector may provide `int` or `float`-based values. This arithmetic method returns a `FloatVector2`
         '''
         
-        if not isinstance(x, int):
-            error:str = f"Value of X ({x}) is not an integer"
-            raise ValueError(error)
+        if scalar == 0:
+            error:str = "Cannot divide by zero"
+            raise ZeroDivisionError(error)
+        
+        if isinstance(scalar, (int, float)):
+            return FloatVector2.from_iterable(self._array / scalar)
     
-        if not isinstance(y, int):
-            error:str = f"Value of Y ({y}) is not an integer"
-            raise ValueError(error)
+        error:str = "Can only divide `IntVector2` by an `int` or `float`"
+        raise TypeError(error)
 
-        self.x:int = x
-        self.y:int = y
-    
-    def __add__(self, other:Union[IntVector2, np.ndarray]) -> IntVector2:
-        if isinstance(other, IntVector2):
-            return IntVector2(self.x + other.x, self.y + other.y)
-        
-        if isinstance(other, np.ndarray):
-            return IntVector2(self.x + other[0], self.y + other[1])
-        
-        raise TypeError(f"Unsupported addition with type {type(other)}")
-    
-    def __eq__(self, other:Union[FloatVector2, IntVector2, np.ndarray]) -> bool:
-        if isinstance(other, FloatVector2) or isinstance(other, IntVector2):
-            return self.to_tuple() == other.to_tuple()
-        
-        if isinstance(other, np.ndarray):
-            return self.to_tuple() == (other[0], other[1])
-
-    def __hash__(self) -> int:
-        return hash(self.to_tuple())
-
-    def __sub__(self, other:Union[IntVector2, np.ndarray]) -> IntVector2:
-        if isinstance(other, IntVector2):
-            return IntVector2(self.x - other.x, self.y - other.y)
-        
-        if isinstance(other, np.ndarray):
-            return IntVector2(self.x - other[0], self.y - other[1])
-        
-        raise TypeError(f"Unsupported subtraction with type {type(other)}")
-
-    def __repr__(self) -> str:
-        return f"X: {self.x}, Y: {self.y}"
-
-    @classmethod
-    def from_tuple(cls, xy:tuple[int, int]) -> IntVector2:
+    def copy(self) -> IntVector2:
         '''
-        Instantiate a new Vector from a tuple with integer X and Y values
+        Copy this vector into another instance of the same vector.
+        
+        Returns
+        -------
+        IntVector2
+            This vector as another instance.
+        '''
+
+        return IntVector2(self._array[0], self._array[1])
+
+    def dot(self, other: IntVector2) -> float:
+        '''
+        Calculate the dot product of this vector with another.
         
         Parameters
         ----------
-        xy : tuple[int, int]
-            The tuple with the X and Y values
+        other : IntVector2
+            The other vector to calculate the dot product with.
+        
+        Returns
+        -------
+        float
+            The dot product of these two vectors.
+        '''
+
+        return float(np.dot(self._array, other._array))
+
+    @classmethod
+    def from_iterable(cls, iterable: Union[IntVector2, np.ndarray[np.int32], tuple[int, int], list[int]]) -> IntVector2:
+        '''
+        Create a new 2D, `int`-based vector array from an iterable with 2 `int` values.
+        
+        Parameters
+        ----------
+        iterable : IntVector2 | numpy.ndarray[numpy.int32] | tuple[int, int] | list[int]
+            The iterable with 2 `int` values.
+        
+        Returns
+        -------
+        IntVector2
+            The new 2D, `int`-based vector array.
         
         Raises
         ------
         ValueError
-            - If the provided items in the tuple are not integers
-            - If the provided tuple does not contain 2 values
+            If the provided iterable contains more or less than 2 values
         '''
 
-        if len(xy) != 2:
-            error:str = "XY tuple must contain 2 values"
+        items: tuple[int, int] = tuple(iterable)
+
+        if len(items) != 2:
+            error:str = "Iterable provided must only contain 2 values"
             raise ValueError(error)
-        
-        return cls(xy[0], xy[1])
-    
-    def to_numpy(self) -> np.ndarray[np.int32]:
+
+        x, y = items        
+        return cls(x, y)
+
+    def normalize(self) -> FloatVector2:
         '''
-        Converts this instance of `IntVector2` into a numpy array
+        Normalize this vector.
         
         Returns
         -------
-        array : numpy.ndarray[numpy.int32]
-            Converted x and y values
+        FloatVector2
+            The normalized vector.
+        
+        Raises
+        ------
+        ZeroDivisionError
+            If the magnitude of this vector is 0
         '''
 
-        return np.array([self.x, self.y], dtype=np.int32)
+        mag: float = self.magnitude()
 
+        if mag == 0:
+            error:str = "Cannot normalize a zero-length vector."
+            raise ZeroDivisionError(error)
+        
+        return self / mag
+
+    def to_numpy(self, copy: bool = True) -> NDArray[np.int32]:
+        '''
+        Return this vector as an instance of a `NumPy` array.
+
+        Parameters
+        ----------
+        copy : bool
+            If this method should return a copy of the internal `NumPy` array or the array itself
+
+        Returns
+        -------
+        numpy.ndarray[numpy.int32]
+            This vector as an instance of a `NumPy` array.
+
+        Warning
+        -------
+        If you return the array itself, any changes to that array will change this vector object.
+        '''
+
+        return self._array.copy() if copy else self._array
+    
     def to_tuple(self) -> tuple[int, int]:
         '''
-        Converts this instance of `IntVector2` into a `tuple`
+        Return this vector as a tuple.
         
         Returns
         -------
-        vector : tuple[int, int]
-            Converted x and y values
+        tuple[int, int]
+            This vector as a tuple.
         '''
 
-        return (self.x, self.y)
+        return tuple(self._array)
+
+    @property
+    def x(self) -> int:
+        '''Coordinate on the X-axis.'''
+        return self._array[0]
+
+    @x.setter
+    def x(self, value: int) -> None:
+        self._array[0] = int(value)
+
+    @property
+    def y(self) -> int:
+        '''Coordinate on the Y-axis.'''
+        return self._array[1]
+    
+    @y.setter
+    def y(self, value: int) -> None:
+        self._array[1] = int(value)
