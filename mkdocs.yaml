@@ -99,8 +99,12 @@ nav:
     - Settings: pages/api/settings.md
   - Changelog:
     - Index: pages/changelog/index.md
-    - 0.6.0: pages/changelog/0.6.0.md
-    - 0.5.0: pages/changelog/0.5.0.md
-    - 0.4.0: pages/changelog/0.4.0.md
-    - 0.3.0-: pages/changelog/0.1.0-0.3.0.md
-    - 0.0.1-: pages/changelog/0.0.1.dev1-0.0.1.md
+    - 0.6.0 (UNKNOWN): pages/changelog/0.6.0.md
+    - 0.5.0 (5-7-2025): pages/changelog/0.5.0.md
+    - 0.4.0 (5-5-2025): pages/changelog/0.4.0.md
+    - 0.3.0 (10-13-2024): pages/changelog/0.3.0.md
+    - 0.2.0 (8-28-2024): pages/changelog/0.2.0.md
+    - 0.1.0 (7-11-2024): pages/changelog/0.1.0.md
+    - 0.0.1 (7-11-2024): pages/changelog/0.0.1.md
+    - 0.0.1.dev2 (7-11-2024): pages/changelog/0.0.1.dev2.md
+    - 0.0.1.dev1 (7-11-2024): pages/changelog/0.0.1.dev1.md
