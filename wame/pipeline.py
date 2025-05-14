@@ -1,14 +1,16 @@
 from __future__ import annotations
 
-class Pipeline:
+from enum import auto, Enum
+
+class Pipeline(Enum):
     '''Engine Rendering Pipeline'''
 
-    PYGAME:int = 0
+    PYGAME:int = auto()
     '''
-    PyGame will render all elements/objects
+    Pygame will render all elements/objects
     '''
 
-    OPENGL:int = 1
+    OPENGL:int = auto()
     '''
     OpenGL will render all elements/objects
 

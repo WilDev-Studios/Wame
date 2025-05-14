@@ -20,14 +20,15 @@ class ColorRGB:
         
         Raises
         ------
+        TypeError
+            If any color value is not an integer
         ValueError
-            - If any color value is not an integer
-            - If any color value is less than `0` or more than `255`
+            If any color value is less than `0` or more than `255`
         '''
 
         def color_not_int(color:str) -> NoReturn:
             error:str = f"RGB color value {color} must be an integer"
-            raise ValueError(error)
+            raise TypeError(error)
     
         def color_invalid_range(color:str, value:int) -> NoReturn:
             error:str = f"RGB color value {color} value must be between 0-255, not {value}"
@@ -79,9 +80,15 @@ class ColorRGB:
         
         Raises
         ------
+        TypeError
+            If the provided `rgb` object is not a tuple
         ValueError
             If there's not 3 values within the provided tuple
         '''
+
+        if not isinstance(rgb, tuple):
+            error: str = "RGB object must be a tuple"
+            raise TypeError(error)
 
         if len(rgb) != 3:
             error:str = "RGB tuple must contain 3 values"
@@ -130,13 +137,20 @@ class ColorRGBA(ColorRGB):
             The B (blue) value (0-255)
         a : int
             The A (alpha) value (0-1)
+        
+        Raises
+        ------
+        TypeError
+            If the provided `a` argument is not an `int` or `float`
+        ValueError
+            If the provided `a` argument is not between `0` and `1`
         '''
 
         super().__init__(r, g, b)
         
         if not isinstance(a, (int, float)):
-            error:str = f"RGBA color value A must be either an integer or float"
-            raise ValueError(error)
+            error: str = f"RGBA color value A must be either an integer or float"
+            raise TypeError(error)
 
         if a > 1 or a < 0:
             error:str = f"RGBA color value A value must be between 0-1, not {a}"
@@ -164,9 +178,15 @@ class ColorRGBA(ColorRGB):
         
         Raises
         ------
+        TypeError
+            If the provided `rgba` object isn't a `tuple`
         ValueError
-            If the provided tuple doesn't contain 3-4 characters (RGB or RGBA)
+            If the provided `tuple` doesn't contain 3-4 characters (RGB or RGBA)
         '''
+
+        if not isinstance(rgba, tuple):
+            error: str = "RGBA object must be a tuple"
+            raise TypeError(error)
 
         if len(rgba) not in [3, 4]:
             error:str = "RGBA object must contain 3-4 values only"

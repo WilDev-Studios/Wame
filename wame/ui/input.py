@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Callable
 
 from wame.color.rgb import ColorRGBA
-from wame.common.keys import KEYS
+from wame.utils.keys import KEYS
 from wame.vector.xy import FloatVector2, IntVector2
 from wame.ui.frame import Frame
 from wame.ui.renderable import Renderable
@@ -31,7 +31,7 @@ class CheckboxInput(Renderable):
         uncheckedColor : wame.color.rgb.ColorRGBA
             The color of the box when unchecked (`False`/inactive)
         default : bool
-            The original state of the input before any interaction - Default `False`
+            The original state of the input before any interaction
         y_flipped : bool
             If it should be rendered with the Y-axis flipped - May be necessary depending on your OpenGL setup
 
@@ -197,7 +197,7 @@ class CheckboxInput(Renderable):
             The exact position of this object from the top-left point
         '''
         
-        position = position if isinstance(position, IntVector2) else IntVector2.from_tuple(position)
+        position = position if isinstance(position, IntVector2) else IntVector2.from_iterable(position)
 
         if self._parent:
             position.x += self._parent.position.x
@@ -215,7 +215,7 @@ class CheckboxInput(Renderable):
             The exact size of this object
         '''
         
-        self.size = size if isinstance(size, IntVector2) else IntVector2.from_tuple(size)
+        self.size = size if isinstance(size, IntVector2) else IntVector2.from_iterable(size)
 
     def set_scaled_position(self, position:FloatVector2) -> None:
         '''
@@ -232,7 +232,7 @@ class CheckboxInput(Renderable):
             If the provided positional values exceed `0`-`1`
         '''
         
-        position = position if isinstance(position, FloatVector2) else FloatVector2.from_tuple(position)
+        position = position if isinstance(position, FloatVector2) else FloatVector2.from_iterable(position)
 
         if position.x > 1 or position.x < 0 or position.y > 1 or position.y < 0:
             error:str = "Scaled position X, Y values must be between 0 and 1"
@@ -264,7 +264,7 @@ class CheckboxInput(Renderable):
             If the provided size values exceed `0`-`1`
         '''
         
-        size = size if isinstance(size, FloatVector2) else FloatVector2.from_tuple(size)
+        size = size if isinstance(size, FloatVector2) else FloatVector2.from_iterable(size)
 
         if size.x > 1 or size.x < 0 or size.y > 1 or size.y < 0:
             error:str = "Scaled size X, Y values must be between 0 and 1"
@@ -297,7 +297,7 @@ class TextInput(Renderable):
         font : pygame.font.Font
             The font of the text inside of the input
         default : str
-            The original text to show in the input before any interaction - Default `None`
+            The original text to show in the input before any interaction
         yFlipped : bool
             If it should be rendered with the Y-axis flipped - May be necessary depending on your OpenGL setup
         '''
@@ -356,7 +356,7 @@ class TextInput(Renderable):
         mods : int
             The raw `pygame` key modifications
         predicate : typing.Callable[[int, int], bool]
-            A function object that should be used to filter out whether the input should or should not be accepted - Default `None` (all will be entered)
+            A function object that should be used to filter out whether the input should or should not be accepted
         '''
 
         if not self._active:
@@ -514,7 +514,7 @@ class TextInput(Renderable):
             The exact position of this object from the top-left point
         '''
 
-        position = position if isinstance(position, IntVector2) else IntVector2.from_tuple(position)
+        position = position if isinstance(position, IntVector2) else IntVector2.from_iterable(position)
 
         if self._parent:
             position.x += self._parent.position.x
@@ -537,7 +537,7 @@ class TextInput(Renderable):
             The exact size of this object
         '''
         
-        self.size = size if isinstance(size, IntVector2) else IntVector2.from_tuple(size)
+        self.size = size if isinstance(size, IntVector2) else IntVector2.from_iterable(size)
 
         if self.position:
             self.text.set_pixel_position((
@@ -559,7 +559,7 @@ class TextInput(Renderable):
             If the provided positional values exceed `0`-`1`
         '''
 
-        position = position if isinstance(position, FloatVector2) else FloatVector2.from_tuple(position)
+        position = position if isinstance(position, FloatVector2) else FloatVector2.from_iterable(position)
 
         if position.x > 1 or position.x < 0 or position.y > 1 or position.y < 0:
             error:str = "Scaled position X, Y values must be between 0 and 1"
@@ -596,7 +596,7 @@ class TextInput(Renderable):
             If the provided size values exceed `0`-`1`
         '''
 
-        size = size if isinstance(size, FloatVector2) else FloatVector2.from_tuple(size)
+        size = size if isinstance(size, FloatVector2) else FloatVector2.from_iterable(size)
 
         if size.x > 1 or size.x < 0 or size.y > 1 or size.y < 0:
             error:str = "Scaled size X, Y values must be between 0 and 1"

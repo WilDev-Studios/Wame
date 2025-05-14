@@ -1,6 +1,6 @@
 # Wame
 Simple, Pythonic, Pygame Wrapper
-- Latest Version `v0.5.0`
+- Latest Version `v0.6.0`
 - Supports Python `3.7+`
 
 [![Documentation Status](https://readthedocs.org/projects/wame/badge/?version=latest&style=for-the-badge)](https://wame.readthedocs.io/en/latest/?badge=latest)
@@ -46,7 +46,7 @@ engine.set_scene("Basic")
 engine.start()
 ```
 This will create a fullscreen, black window. You can close it by pressing `ALT`+`F4`.
-- If you'd like to see more functional examples, visit our [Tutorials](https://wame.wildevstudios.net/en/latest/pages/tutorials/fps_display/) section of our documentation
+- If you'd like to see more functional examples, visit our [Tutorials](https://wame.wildevstudios.net/en/latest/pages/tutorials) section of our documentation
 
 ## Contributing
 Thanks for your interest in contributing to our game engine! Contributions are welcome, as they can only help us get to where we want to see `wame` go!

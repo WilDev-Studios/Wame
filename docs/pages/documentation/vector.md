@@ -38,8 +38,8 @@ print(vector1)
 ```
 ```python
 # Generating Vectors from Tuples
-vector1: IntVector2 = IntVector2.from_tuple((1, 1))
-vector2: IntVector2 = IntVector2.from_tuple((1000, -1))
+vector1: IntVector2 = IntVector2.from_iterable((1, 1))
+vector2: IntVector2 = IntVector2.from_iterable((1000, -1))
 
 print(vector1.x, vector1.y)
 print(vector2.x, vector2.y)

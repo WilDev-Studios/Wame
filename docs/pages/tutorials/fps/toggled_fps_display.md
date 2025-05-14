@@ -6,15 +6,16 @@ You already have a FPS display but want to toggle it? Look no further - `wame` m
 ## Program
 ```python
 # Assuming a basic FPS text display is already made
+from wame.ui import Text
+
 import pygame
 import wame
-import wame.ui as wui
 
 class TutorialScene(wame.Scene):
     def __init__(self, engine: wame.Engine) -> None:
         super().__init__(engine)
 
-        self.fps_text: wui.Text = wui.Text(self.frame, "FPS | 0", (125, 125, 125), pygame.font.SysFont("Ubuntu", 12))
+        self.fps_text: Text = Text(self.frame, "FPS | 0", (125, 125, 125), pygame.font.SysFont("Ubuntu", 12))
         self.fps_text.set_pixel_position((5, 5))
         self.fps_text.enabled = False # Default to disabled
     

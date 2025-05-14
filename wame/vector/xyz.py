@@ -1,288 +1,495 @@
 from __future__ import annotations
 
+from numpy.typing import NDArray
 from typing import Union
+from wame.vector.base import BaseVector3
 
 import numpy as np
-import math
 
-class FloatVector3:
-    '''Vector with 3 Float Values: X, Y, and Z'''
+class FloatVector3(BaseVector3):
+    '''3D Float Vector Array.'''
 
-    def __init__(self, x:Union[float | int], y:Union[float | int], z:Union[float | int]) -> None:
+    _array: NDArray[np.float32]
+
+    def __init__(self, x: float, y: float, z: float) -> None:
         '''
-        Instantiate a new Vector with float X, Y, and Z values
+        Create a new 3D, `float`-based vector array.
         
         Parameters
         ----------
-        x : float | int
-            The X value
-        y : float | int
-            The Y value
-        z : float | int
-            The Z value
-        
-        Raises
-        ------
-        ValueError
-            If any provided arguments are not `float` or `int`
+        x : float
+            Coordinate on the X-axis.
+        y : float
+            Coordinate on the Y-axis.
+        z : float
+            Coordinate on the Z-axis.
         '''
-        
-        if not isinstance(x, (float, int)) or not isinstance(y, (float, int)) or not isinstance(z, (float, int)):
-            error:str = "Types of X, Y, Z must be of `float` or `int`"
-            raise ValueError(error)
 
-        if isinstance(x, int):
-            x = float(x)
-        
-        if isinstance(y, int):
-            y = float(y)
-        
-        if isinstance(z, int):
-            z = float(z)
+        self._array:NDArray[np.float32] = np.array([x, y, z], np.float32)
 
-        self.x:float = x
-        self.y:float = y
-        self.z:float = z
+    def __add__(self, other: FloatVector3) -> FloatVector3:
+        if isinstance(other, FloatVector3):
+            return FloatVector3.from_iterable(self._array + other._array)
+        
+        error:str = f"Unsupported operand type(s) for +: `FloatVector3` and `{type(other).__name__}`"
+        raise TypeError(error)
+
+    def __floordiv__(self, scalar: Union[int, float]) -> FloatVector3:
+        if scalar == 0:
+            error:str = "Cannot divide by zero"
+            raise ZeroDivisionError(error)
+        
+        if isinstance(scalar, (int, float)):
+            return FloatVector3.from_iterable(self._array // scalar)
+        
+        error:str = "Can only divide `FloatVector3` by an `int` or `float`"
+        raise TypeError(error)
+
+    def __mul__(self, scalar: float) -> FloatVector3:
+        if isinstance(scalar, (float, int)):
+            return FloatVector3.from_iterable(self._array * scalar)
+        
+        error:str = "Can only multiply `FloatVector3` by a `float` or `int`"
+        raise TypeError(error)
+
+    def __neg__(self) -> FloatVector3:
+        return FloatVector3.from_iterable(-self._array)
+
+    def __rsub__(self, other: FloatVector3) -> FloatVector3:
+        if isinstance(other, FloatVector3):
+            return FloatVector3.from_iterable(other._array - self._array)
+        
+        error:str = f"Unsupported operand type(s) for -: `{type(other).__name__}` and `FloatVector3`"
+        raise TypeError(error)
+
+    def __setitem__(self, index: int, value:float) -> None:
+        if index not in (0, 1, 2):
+            error:str = "Index out of bounds for FloatVector3: valid indices are 0, 1, and 2"
+            raise IndexError(error)
+        
+        self._array[index] = float(value)
+
+    def __sub__(self, other: FloatVector3) -> FloatVector3:
+        if isinstance(other, FloatVector3):
+            return FloatVector3.from_iterable(self._array - other._array)
+        
+        error:str = f"Unsupported operand type(s) for -: `FloatVector2` and `{type(other).__name__}`"
+        raise TypeError(error)
+
+    def __truediv__(self, scalar: Union[int, float]) -> FloatVector3:
+        if scalar == 0:
+            error:str = "Cannot divide by zero"
+            raise ZeroDivisionError(error)
+        
+        if isinstance(scalar, (int, float)):
+            return FloatVector3.from_iterable(self._array / scalar)
     
-    def __add__(self, other:Union[FloatVector3, IntVector3, np.ndarray]) -> FloatVector3:
-        if isinstance(other, FloatVector3) or isinstance(other, IntVector3):
-            return FloatVector3(self.x + other.x, self.y + other.y, self.z + other.z)
-        
-        if isinstance(other, np.ndarray):
-            return FloatVector3(self.x + other[0], self.y + other[1], self.z + other[2])
-        
-        raise TypeError(f"Unsupported addition with type {type(other)}")
-    
-    def __eq__(self, other:Union[FloatVector3, IntVector3, np.ndarray]) -> bool:
-        if isinstance(other, FloatVector3) or isinstance(other, IntVector3):
-            return self.to_tuple() == other.to_tuple()
-        
-        if isinstance(other, np.ndarray):
-            return self.to_tuple() == (other[0], other[1], other[2])
+        error:str = "Can only divide `FloatVector3` by an `int` or `float`"
+        raise TypeError(error)
 
-    def __hash__(self) -> int:
-        return hash(self.to_tuple())
-
-    def __sub__(self, other:Union[FloatVector3, IntVector3, np.ndarray]) -> FloatVector3:
-        if isinstance(other, FloatVector3) or isinstance(other, IntVector3):
-            return FloatVector3(self.x - other.x, self.y - other.y, self.z - other.z)
-        
-        if isinstance(other, np.ndarray):
-            return FloatVector3(self.x - other[0], self.y - other[1], self.z - other[2])
-        
-        raise TypeError(f"Unsupported subtraction with type {type(other)}")
-
-    def __repr__(self) -> str:
-        return f"X: {self.x}, Y: {self.y}, Z: {self.z}"
-    
-    @classmethod
-    def from_tuple(cls, xyz:tuple[Union[float, int], Union[float, int], Union[float, int]]) -> FloatVector3:
+    def copy(self) -> FloatVector3:
         '''
-        Instantiate a new Vector from a tuple with float X, Y, and Z values
-        
-        Parameters
-        ----------
-        xyz : tuple[float | int, float | int, float | int]
-            The tuple with the X, Y, and Z values
-        
-        Raises
-        ------
-        ValueError
-            - If too many or little items are provided in the tuple
-            - If the provided items in the tuple are not floats
-        '''
-        
-        if len(xyz) != 3:
-            error:str = "XYZ tuple value must contain 3 values"
-            raise ValueError(error)
-
-        return cls(xyz[0], xyz[1], xyz[2])
-    
-    def to_numpy(self) -> np.ndarray[np.int32]:
-        '''
-        Converts this instance of `FloatVector3` into a numpy array
+        Copy this vector into another instance of the same vector.
         
         Returns
         -------
-        array : numpy.ndarray[numpy.float32]
-            Converted x, y, and z values
+        FloatVector3
+            This vector as another instance.
         '''
 
-        return np.array([self.x, self.y, self.z], dtype=np.float32)
+        return FloatVector3(self._array[0], self._array[1], self._array[2])
 
+    def cross(self, other: FloatVector3) -> FloatVector3:
+        '''
+        Calculate the cross product of this vector with another.
+        
+        Parameters
+        ----------
+        other : FloatVector3
+            The other vector cross with.
+        
+        Returns
+        -------
+        FloatVector3
+            The resulting cross product vector.
+        '''
+
+        if not isinstance(other, FloatVector3):
+            error:str = f"Expected `FloatVector3`, got `{type(other).__name__}`"
+            raise TypeError(error)
+        
+        return FloatVector3.from_iterable(np.cross(self._array, other._array))
+
+    def dot(self, other: FloatVector3) -> float:
+        '''
+        Calculate the dot product of this vector with another.
+        
+        Parameters
+        ----------
+        other : FloatVector3
+            The other vector to calculate the dot product with.
+        
+        Returns
+        -------
+        float
+            The dot product of these two vectors.
+        '''
+        
+        return float(np.dot(self._array, other._array))
+
+    @classmethod
+    def from_iterable(cls, iterable: Union[FloatVector3, IntVector3, np.ndarray[np.float32], tuple[Union[int, float], Union[int, float], Union[int, float]], list[Union[int, float]]]) -> FloatVector3:
+        '''
+        Create a new 3D, `float`-based vector array from an iterable with 3 `float` or `int` values.
+        
+        Parameters
+        ----------
+        iterable : FloatVector3 | IntVector3 | numpy.ndarray[numpy.int32] | tuple[int | float, int | float, int | float] | list[int | float]
+            The iterable with 3 `float` or `int` values.
+        
+        Returns
+        -------
+        FloatVector3
+            The new 3D, `float`-based vector array.
+        
+        Raises
+        ------
+        ValueError
+            If the provided iterable contains more or less than 3 values
+        '''
+
+        items: tuple[float, float, float] = tuple(iterable)
+
+        if len(items) != 3:
+            error:str = "Iterable provided must only contain 3 values"
+            raise ValueError(error)
+
+        x, y, z = items        
+        return cls(x, y, z)
+
+    def normalize(self) -> FloatVector3:
+        '''
+        Normalize this vector.
+        
+        Returns
+        -------
+        FloatVector3
+            The normalized vector.
+        
+        Raises
+        ------
+        ZeroDivisionError
+            If the magnitude of this vector is 0
+        '''
+
+        mag: float = self.magnitude()
+
+        if mag == 0:
+            error:str = "Cannot normalize a zero-length vector."
+            raise ZeroDivisionError(error)
+        
+        return self / mag
+
+    def to_numpy(self, copy: bool = True) -> NDArray[np.float32]:
+        '''
+        Return this vector as an instance of a `NumPy` array.
+
+        Parameters
+        ----------
+        copy : bool
+            If this method should return a copy of the internal `NumPy` array or the array itself
+
+        Returns
+        -------
+        numpy.ndarray[numpy.float32]
+            This vector as an instance of a `NumPy` array.
+
+        Warning
+        -------
+        If you return the array itself, any changes to that array will change this vector object.
+        '''
+
+        return self._array.copy() if copy else self._array
+    
     def to_tuple(self) -> tuple[float, float, float]:
         '''
-        Converts this instance of `FloatVector3` into a `tuple`
+        Return this vector as a tuple.
         
         Returns
         -------
-        vector : tuple[float, float, float]
-            Converted x, y, and z values
+        tuple[float, float, float]
+            This vector as a tuple.
         '''
 
-        return (self.x, self.y, self.z)
+        return tuple(self._array)
 
-class IntVector3:
-    '''Vector with 3 Integer Values: X, Y, and Z'''
+    @property
+    def x(self) -> float:
+        '''Coordinate on the X-axis.'''
+        return self._array[0]
 
-    def __init__(self, x:int, y:int, z:int) -> None:
+    @x.setter
+    def x(self, value: float) -> None:
+        self._array[0] = float(value)
+
+    @property
+    def y(self) -> float:
+        '''Coordinate on the Y-axis.'''
+        return self._array[1]
+    
+    @y.setter
+    def y(self, value: float) -> None:
+        self._array[1] = float(value)
+    
+    @property
+    def z(self) -> float:
+        '''Coordinate on the Z-axis.'''
+        return self._array[2]
+    
+    @z.setter
+    def z(self, value: float) -> None:
+        self._array[2] = float(value)
+
+class IntVector3(BaseVector3):
+    '''3D Integer Vector Array.'''
+
+    _array: NDArray[np.int32]
+
+    def __init__(self, x: int, y: int, z: int) -> None:
         '''
-        Instantiate a new Vector with integer X, Y, and Z values
+        Create a new 3D, `int`-based vector array.
         
         Parameters
         ----------
         x : int
-            The X value
+            Coordinate on the X-axis.
         y : int
-            The Y value
+            Coordinate on the Y-axis.
         z : int
-            The Z value
-        
-        Raises
-        ------
-        ValueError
-            If any provided arguments are not integers
+            Coordinate on the Z-axis.
         '''
-        
-        if not isinstance(x, int):
-            error:str = f"Value of X ({x}) is not an integer"
-            raise ValueError(error)
-    
-        if not isinstance(y, int):
-            error:str = f"Value of Y ({y}) is not an integer"
-            raise ValueError(error)
-    
-        if not isinstance(z, int):
-            error:str = f"Value of Z ({z}) is not an integer"
-            raise ValueError(error)
 
-        self.x:int = x
-        self.y:int = y
-        self.z:int = z
-    
-    def __add__(self, other:Union[IntVector3, np.ndarray]) -> IntVector3:
+        self._array:NDArray[np.int32] = np.array([x, y, z], np.int32)
+
+    def __add__(self, other: IntVector3) -> IntVector3:
         if isinstance(other, IntVector3):
-            return IntVector3(self.x + other.x, self.y + other.y, self.z + other.z)
+            return IntVector3.from_iterable(self._array + other._array)
         
-        if isinstance(other, np.ndarray):
-            return IntVector3(self.x + other[0], self.y + other[1], self.z + other[2])
-        
-        raise TypeError(f"Unsupported addition with type {type(other)}")
+        error:str = f"Unsupported operand type(s) for +: `IntVector3` and `{type(other).__name__}`"
+        raise TypeError(error)
 
-    def __hash__(self) -> int:
-        return hash(self.to_tuple())
-    
-    def __eq__(self, other:Union[FloatVector3, IntVector3, np.ndarray]) -> bool:
-        if isinstance(other, FloatVector3) or isinstance(other, IntVector3):
-            return self.to_tuple() == other.to_tuple()
+    def __floordiv__(self, scalar: float) -> IntVector3:
+        if scalar == 0:
+            error:str = "Cannot divide by zero"
+            raise ZeroDivisionError(error)
         
-        if isinstance(other, np.ndarray):
-            return self.to_tuple() == (other[0], other[1], other[2])
+        if isinstance(scalar, (int, float)):
+            return IntVector3.from_iterable(self._array // scalar)
+        
+        error:str = "Can only floor divide `IntVector3` by an `int` or `float`"
+        raise TypeError(error)
 
-    def __sub__(self, other:Union[IntVector3, np.ndarray]) -> IntVector3:
+    def __mul__(self, scalar: int) -> IntVector3:
+        if isinstance(scalar, int):
+            return IntVector3.from_iterable(self._array * scalar)
+        
+        error:str = "Can only multiply `IntVector2` by an `int`"
+        raise TypeError(error)
+
+    def __neg__(self) -> IntVector3:
+        return IntVector3.from_iterable(-self._array)
+
+    def __rsub__(self, other: IntVector3) -> IntVector3:
         if isinstance(other, IntVector3):
-            return IntVector3(self.x - other.x, self.y - other.y, self.z - other.z)
+            return IntVector3.from_iterable(other._array - self._array)
         
-        if isinstance(other, np.ndarray):
-            return IntVector3(self.x - other[0], self.y - other[1], self.z - other[2])
-        
-        raise TypeError(f"Unsupported subtraction with type {type(other)}")
+        error:str = f"Unsupported operand type(s) for -: `{type(other).__name__}` and `IntVector3`"
+        raise TypeError(error)
 
-    def __repr__(self) -> str:
-        return f"X: {self.x}, Y: {self.y}, Z: {self.z}"
+    def __setitem__(self, index: int, value:int) -> None:
+        if index not in (0, 1, 2):
+            error:str = "Index out of bounds for IntVector3: valid indices are 0, 1, and 2"
+            raise IndexError(error)
+        
+        self._array[index] = int(value)
+
+    def __sub__(self, other: IntVector3) -> IntVector3:
+        if isinstance(other, IntVector3):
+            return IntVector3.from_iterable(self._array - other._array)
+        
+        error:str = f"Unsupported operand type(s) for -: `IntVector3` and `{type(other).__name__}`"
+        raise TypeError(error)
+
+    def __truediv__(self, scalar: float) -> FloatVector3:
+        if scalar == 0:
+            error:str = "Cannot divide by zero"
+            raise ZeroDivisionError(error)
+        
+        if isinstance(scalar, (int, float)):
+            return FloatVector3.from_iterable(self._array / scalar)
     
-    def cross(self, vector:IntVector3) -> IntVector3:
+        error:str = "Can only divide `IntVector3` by an `int` or `float`"
+        raise TypeError(error)
+
+    def copy(self) -> IntVector3:
         '''
-        Calculate the cross product of two vectors
-        
-        Parameters
-        ----------
-        vector : wame.IntVector3
-            The other vector to cross with this vector
+        Copy this vector into another instance of the same vector.
         
         Returns
         -------
-        cross : wame.IntVector3
-            The cross product
-        
-        Raises
-        ------
-        ValueError
-            If the vector provided is not a `wame.vector.xyz.IntVector3`
+        IntVector3
+            This vector as another instance.
         '''
 
-        if not isinstance(vector, IntVector3):
-            error:str = "Provided vector must be a `wame.vector.xyz.IntVector3`"
-            raise ValueError(error)
+        return IntVector3(self._array[0], self._array[1], self._array[2])
 
-        result:tuple[float, int, float, int, float, int] = (
-            (self.y * vector.z) - (self.z * vector.y),
-            (self.z * vector.x) - (self.x * vector.z),
-            (self.x * vector.y) - (self.y * vector.x)
-        )
+    def cross(self, other: IntVector3) -> IntVector3:
+        '''
+        Calculate the cross product of this vector with another.
         
-        return IntVector3.from_tuple(result)
+        Parameters
+        ----------
+        other : IntVector3
+            The other vector cross with.
+        
+        Returns
+        -------
+        IntVector3
+            The resulting cross product vector.
+        '''
+
+        if not isinstance(other, IntVector3):
+            error:str = f"Expected `IntVector3`, got `{type(other).__name__}`"
+            raise TypeError(error)
+        
+        return IntVector3.from_iterable(np.cross(self._array, other._array))
+
+    def dot(self, other: IntVector3) -> float:
+        '''
+        Calculate the dot product of this vector with another.
+        
+        Parameters
+        ----------
+        other : IntVector3
+            The other vector to calculate the dot product with.
+        
+        Returns
+        -------
+        float
+            The dot product of these two vectors.
+        '''
+        
+        return float(np.dot(self._array, other._array))
 
     @classmethod
-    def from_tuple(cls, xyz:tuple[int, int, int]) -> IntVector3:
+    def from_iterable(cls, iterable: Union[IntVector3, np.ndarray[np.int32], tuple[int, int, int], list[int]]) -> IntVector3:
         '''
-        Instantiate a new Vector from a tuple with integer X, Y, and Z values
+        Create a new 3D, `int`-based vector array from an iterable with 3 `int` values.
         
         Parameters
         ----------
-        xyz : tuple[int, int, int]
-            The tuple with the X, Y, and Z values
+        iterable : IntVector3 | numpy.ndarray[numpy.int32] | tuple[int, int, int] | list[int]
+            The iterable with 3 `int` values.
+        
+        Returns
+        -------
+        IntVector3
+            The new 3D, `int`-based vector array.
         
         Raises
         ------
         ValueError
-            - If the provided items in the tuple are not integers
-            - If the provided tuple does not contain 3 values
+            If the provided iterable contains more or less than 3 values
         '''
 
-        if len(xyz) != 3:
-            error:str = "XYZ tuple must contain 3 values"
+        items: tuple[int, int, int] = tuple(iterable)
+
+        if len(items) != 3:
+            error:str = "Iterable provided must only contain 3 values"
             raise ValueError(error)
-        
-        return cls(xyz[0], xyz[1], xyz[2])
-    
+
+        x, y, z = items
+        return cls(x, y, z)
+
     def normalize(self) -> FloatVector3:
         '''
-        Calculate the normal of this vector
+        Normalize this vector.
         
         Returns
         -------
-        vector : wame.FloatVector3
-            This vector normalized
-        '''
-
-        length:float = math.sqrt((self.x ** 2) + (self.y ** 2) + (self.z ** 2))
-
-        if length > 0:
-            return FloatVector3(self.x / length, self.y / length, self.z / length)
-
-        return FloatVector3(0.0, 0.0, 0.0)
-
-    def to_numpy(self) -> np.ndarray[np.int32]:
-        '''
-        Converts this instance of `IntVector3` into a numpy array
+        FloatVector3
+            The normalized vector.
         
+        Raises
+        ------
+        ZeroDivisionError
+            If the magnitude of this vector is 0
+        '''
+
+        mag: float = self.magnitude()
+
+        if mag == 0:
+            error:str = "Cannot normalize a zero-length vector."
+            raise ZeroDivisionError(error)
+        
+        return self / mag
+
+    def to_numpy(self, copy: bool = True) -> NDArray[np.int32]:
+        '''
+        Return this vector as an instance of a `NumPy` array.
+
+        Parameters
+        ----------
+        copy : bool
+            If this method should return a copy of the internal `NumPy` array or the array itself
+
         Returns
         -------
-        array : numpy.ndarray[numpy.int32]
-            Converted x, y, and z values
+        numpy.ndarray[numpy.int32]
+            This vector as an instance of a `NumPy` array.
+
+        Warning
+        -------
+        If you return the array itself, any changes to that array will change this vector object.
         '''
 
-        return np.array([self.x, self.y, self.z], dtype=np.int32)
-
+        return self._array.copy() if copy else self._array
+    
     def to_tuple(self) -> tuple[int, int, int]:
         '''
-        Converts this instance of `IntVector3` into a `tuple`
+        Return this vector as a tuple.
         
         Returns
         -------
-        vector : tuple[int, int, int]
-            Converted x, y, and z values
+        tuple[int, int, int]
+            This vector as a tuple.
         '''
 
-        return (self.x, self.y, self.z)
+        return tuple(self._array)
+
+    @property
+    def x(self) -> int:
+        '''Coordinate on the X-axis.'''
+        return self._array[0]
+
+    @x.setter
+    def x(self, value: int) -> None:
+        self._array[0] = int(value)
+
+    @property
+    def y(self) -> int:
+        '''Coordinate on the Y-axis.'''
+        return self._array[1]
+    
+    @y.setter
+    def y(self, value: int) -> None:
+        self._array[1] = int(value)
+    
+    @property
+    def z(self) -> int:
+        '''Coordinate on the Z-axis.'''
+        return self._array[2]
+    
+    @z.setter
+    def z(self, value: int) -> None:
+        self._array[2] = int(value)

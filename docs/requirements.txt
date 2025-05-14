@@ -9,3 +9,4 @@ pymdown-extensions
 Markdown
 MarkupSafe
 griffe-inherited-docstrings
+mkdocs-redirects
