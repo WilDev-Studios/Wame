@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import Any, Callable, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from wame.engine import Engine
 
 from wame.pipeline import Pipeline
 from wame.ui.frame import Frame
+from wame.utils.tween import Tween
 from wame.vector import IntVector2
 
 from OpenGL.GL import *
@@ -15,7 +16,7 @@ from OpenGL.GL import *
 import pygame
 
 class Scene(ABC):
-    '''Handles all events and rendering for the engine'''
+    '''Handles all events and rendering for the engine.'''
 
     def __init__(self, engine:'Engine') -> None:
         '''
@@ -25,17 +26,23 @@ class Scene(ABC):
         '''
         
         self.engine:'Engine' = engine
-        '''The engine running the scene'''
+        '''The engine running the scene.'''
 
         self.screen:pygame.Surface = self.engine.screen
-        '''The screen rendering all objects'''
+        '''The screen rendering all objects.'''
 
         self.frame:Frame = Frame(engine)
-        '''The UI frame responsible for handling all scene UI objects natively - Rendered each frame after `on_render` automatically'''
+        '''The UI frame responsible for handling all scene UI objects natively - Rendered each frame after `on_render` automatically, unless disabled.'''
         self.frame.set_pixel_position((0, 0))
         self.frame.set_pixel_size((self.screen.get_width(), self.screen.get_height()))
 
         self._first_elapsed:bool = False
+        
+        self._events_first: set[Callable[[], None]] = set()
+        self._events_update: set[Callable[[], None]] = set()
+        
+        self.tween:Tween = Tween(self)
+        '''The tweening object responsible for animating objects.'''
 
     def _check_events(self) -> None:
         for event in pygame.event.get():
@@ -50,31 +57,31 @@ class Scene(ABC):
             elif event.type == pygame.JOYDEVICEREMOVED:
                 self.on_joy_device_removed(event.device_index)
             elif event.type == pygame.JOYHATMOTION:
-                self.on_joy_hat_motion(event.joy, event.hat, IntVector2.from_tuple(event.value))
+                self.on_joy_hat_motion(event.joy, event.hat, IntVector2.from_iterable(event.value))
             elif event.type == pygame.KEYDOWN:
                 self.on_key_pressed(event.key, event.mod)
             elif event.type == pygame.KEYUP:
                 self.on_key_released(event.key, event.mod)
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                mousePosition: IntVector2 = IntVector2.from_tuple(event.pos)
+                mousePosition: IntVector2 = IntVector2.from_iterable(event.pos)
 
                 if event.button in [4, 5]:  # Scrolling shouldn't send a `MOUSEBUTTONDOWN` event
                     continue
 
                 self.on_mouse_pressed(mousePosition, event.button)
             elif event.type == pygame.MOUSEBUTTONUP:
-                mousePosition: IntVector2 = IntVector2.from_tuple(event.pos)
+                mousePosition: IntVector2 = IntVector2.from_iterable(event.pos)
 
                 if event.button in [4, 5]:  # Scrolling shouldn't send a `MOUSEBUTTONUP` event
                     continue
 
                 self.on_mouse_released(mousePosition, event.button)
             elif event.type == pygame.MOUSEMOTION:
-                mousePosition: IntVector2 = IntVector2.from_tuple(event.pos)
+                mousePosition: IntVector2 = IntVector2.from_iterable(event.pos)
 
-                self.on_mouse_move(mousePosition, IntVector2.from_tuple(event.rel))
+                self.on_mouse_move(mousePosition, IntVector2.from_iterable(event.rel))
             elif event.type == pygame.MOUSEWHEEL:
-                mousePosition: IntVector2 = IntVector2.from_tuple(pygame.mouse.get_pos())
+                mousePosition: IntVector2 = IntVector2.from_iterable(pygame.mouse.get_pos())
 
                 self.on_mouse_wheel_scroll(mousePosition, event.y)
             elif event.type == pygame.QUIT:
@@ -102,7 +109,7 @@ class Scene(ABC):
             elif event.type == pygame.WINDOWMOVED:
                 self.on_window_moved(IntVector2(event.x, event.y))
             elif event.type == pygame.WINDOWRESIZED:
-                self.on_window_resize(IntVector2.from_tuple(event.size))
+                self.on_window_resize(IntVector2.from_iterable(event.size))
             elif event.type == pygame.WINDOWRESTORED:
                 self.on_window_restored()
             elif event.type == pygame.WINDOWSHOWN:
@@ -122,6 +129,12 @@ class Scene(ABC):
         self.on_cleanup()
     
     def _first(self) -> None:
+        for event in self._events_first:
+            event()
+
+        if not self.engine._game_loop_enabled:
+            self.engine.step_game_loop()
+
         self.on_first()
 
     def _fixed_update(self) -> None:
@@ -142,6 +155,9 @@ class Scene(ABC):
     def _update(self) -> None:
         if not self._first_elapsed:
             self._first_elapsed = True
+        
+        for event in self._events_update:
+            event()
 
         self.on_update()
     
@@ -443,6 +459,22 @@ class Scene(ABC):
         '''
 
         ...
+
+    def on_tweened(self, object_: Any) -> None:
+        '''
+        Code below should be executed when a tweened object using `self.tween` has finished tweening.
+        
+        Example
+        -------
+        ```python
+        class MyScene(wame.Scene):
+            def __init__(self, engine) -> None:
+                super().__init__(engine)
+
+            def on_tweened(self, object_: Any) -> None:
+                ...
+        ```
+        '''
 
     def on_user_event(self, event:pygame.event.Event) -> None:
         '''

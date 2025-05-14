@@ -247,7 +247,7 @@ class Text(Renderable):
             The exact position to place the top-left of this object
         '''
 
-        position = position if isinstance(position, IntVector2) else IntVector2.from_tuple(position)
+        position = position if isinstance(position, IntVector2) else IntVector2.from_iterable(position)
         position.x += self._parent.position.x
         position.y += self._parent.position.y
 
@@ -268,7 +268,7 @@ class Text(Renderable):
             If the provided positional values exceed `0`-`1`
         '''
         
-        position = position if isinstance(position, FloatVector2) else FloatVector2.from_tuple(position)
+        position = position if isinstance(position, FloatVector2) else FloatVector2.from_iterable(position)
 
         if position.x > 1 or position.x < 0 or position.y > 1 or position.y < 0:
             error:str = "Scaled position X, Y values must be between 0 and 1"

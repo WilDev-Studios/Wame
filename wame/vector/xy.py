@@ -289,12 +289,6 @@ class IntVector2(BaseVector2):
         raise TypeError(error)
 
     def __truediv__(self, scalar: float) -> FloatVector2:
-        '''
-        Warning
-        -------
-        Truly dividing an `int`-based vector may provide `int` or `float`-based values. This arithmetic method returns a `FloatVector2`
-        '''
-        
         if scalar == 0:
             error:str = "Cannot divide by zero"
             raise ZeroDivisionError(error)

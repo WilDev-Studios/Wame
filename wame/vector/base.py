@@ -19,7 +19,6 @@ class BaseVector:
     
     def __abs__(self) -> float: return self.magnitude()
     def __array__(self) -> NDArray[Union[np.int32, np.float32]]: return self._array
-    def __bool__(self) -> bool: return bool(self.magnitude())
     def __eq__(self, other: object) -> bool: return isinstance(other, type(self)) and np.array_equal(self._array, other._array)
     def __iter__(self) -> Iterator[Union[int, float]]: return iter(self._array)
     def __ge__(self, other: BaseVector) -> bool: return self.magnitude() >= other.magnitude()

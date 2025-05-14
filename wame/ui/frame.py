@@ -59,7 +59,7 @@ class Frame(Renderable):
         '''
         Render this frame and it's children to the screen
         '''
-        
+
         if not self.position or not self.size:
             error:str = "The frame must have its size and position set before rendering"
             raise ValueError(error)
@@ -155,7 +155,7 @@ class Frame(Renderable):
             The exact position to place the top-left of this object
         '''
 
-        position = position if isinstance(position, IntVector2) else IntVector2.from_tuple(position)
+        position = position if isinstance(position, IntVector2) else IntVector2.from_iterable(position)
 
         if self._parent:
             position.x += self._parent.position.x
@@ -173,7 +173,7 @@ class Frame(Renderable):
             The exact size of this object
         '''
 
-        self.size = size if isinstance(size, IntVector2) else IntVector2.from_tuple(size)
+        self.size = size if isinstance(size, IntVector2) else IntVector2.from_iterable(size)
 
     def set_scaled_position(self, position:FloatVector2) -> None:
         '''
@@ -190,7 +190,7 @@ class Frame(Renderable):
             If the provided positional values exceed `0`-`1`
         '''
 
-        position = position if isinstance(position, FloatVector2) else FloatVector2.from_tuple(position)
+        position = position if isinstance(position, FloatVector2) else FloatVector2.from_iterable(position)
 
         if position.x > 1 or position.x < 0 or position.y > 1 or position.y < 0:
             error:str = "Scaled position X, Y values must be between 0 and 1"
@@ -222,7 +222,7 @@ class Frame(Renderable):
             If the provided size values exceed `0`-`1`
         '''
         
-        size = size if isinstance(size, FloatVector2) else FloatVector2.from_tuple(size)
+        size = size if isinstance(size, FloatVector2) else FloatVector2.from_iterable(size)
 
         if size.x > 1 or size.x < 0 or size.y > 1 or size.y < 0:
             error:str = "Scaled size X, Y values must be between 0 and 1"

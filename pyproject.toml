@@ -20,8 +20,8 @@ classifiers = [
     "Topic :: Games/Entertainment",
     "Topic :: Software Development :: Libraries :: pygame"
 ]
-keywords = ["python", "pygame", "wrapper", "engine", "game", "opengl", "2D", "3D"]
-dependencies = ["pygame", "opengl", "numpy"]
+keywords = ["python", "pygame", "wrapper", "engine", "game", "opengl", "2D", "3D", "networking"]
+dependencies = ["pygame", "pyopengl", "numpy"]
 
 [project.urls]
 "Homepage" = "https://github.com/WilDev-Studios/Wame"

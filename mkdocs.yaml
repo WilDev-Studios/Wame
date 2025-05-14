@@ -26,6 +26,7 @@ theme:
 
 plugins:
   - search
+  - redirects
   - mkdocstrings:
       handlers:
         python:
@@ -65,7 +66,7 @@ nav:
   - Home: index.md
   - Documentation:
     - Color: pages/documentation/color.md
-    - Common: pages/documentation/common.md
+    - Utils: pages/documentation/utils.md
     - Engine: pages/documentation/engine.md
     - Pipeline: pages/documentation/pipeline.md
     - Scene: pages/documentation/scene.md
@@ -73,15 +74,19 @@ nav:
     - UI: pages/documentation/ui.md
     - Vector: pages/documentation/vector.md
   - Tutorials:
-    - FPS Display: pages/tutorials/fps_display.md
-    - Toggled FPS Display: pages/tutorials/toggled_fps_display.md
+    - Tutorials: pages/tutorials/index.md
+    - FPS:
+      - FPS Display: pages/tutorials/fps/fps_display.md
+      - Toggled FPS Display: pages/tutorials/fps/toggled_fps_display.md
+    - Scenes:
+      - Passing Data: pages/tutorials/scenes/passing_data.md
   - API Reference:
     - Color:
       - RGB: pages/api/color/rgb.md
       - Values: pages/api/color/values.md
-    - Common:
-      - Interval: pages/api/common/interval.md
-      - Keys: pages/api/common/keys.md
+    - Utils:
+      - Keys: pages/api/utils/keys.md
+      - Tween: pages/api/utils/tween.md
     - UI:
       - Button: pages/api/ui/button.md
       - Frame: pages/api/ui/frame.md
@@ -94,12 +99,13 @@ nav:
       - XY: pages/api/vector/xy.md
       - XYZ: pages/api/vector/xyz.md
     - Engine: pages/api/engine.md
+    - Interval: pages/api/interval.md
     - Pipeline: pages/api/pipeline.md
     - Scene: pages/api/scene.md
     - Settings: pages/api/settings.md
   - Changelog:
     - Index: pages/changelog/index.md
-    - 0.6.0 (UNKNOWN): pages/changelog/0.6.0.md
+    - 0.6.0 (5-14-2025): pages/changelog/0.6.0.md
     - 0.5.0 (5-7-2025): pages/changelog/0.5.0.md
     - 0.4.0 (5-5-2025): pages/changelog/0.4.0.md
     - 0.3.0 (10-13-2024): pages/changelog/0.3.0.md

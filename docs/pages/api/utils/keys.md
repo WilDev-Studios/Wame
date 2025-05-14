@@ -4,4 +4,4 @@ description: Key Functionality
 ---
 
 # Keys
-::: wame.common.keys
+::: wame.utils.keys

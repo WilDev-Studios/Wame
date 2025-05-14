@@ -6,6 +6,9 @@ Defined in `wame.scene`:
 - `Scene`s are defined by `wame`, with all methods and attributes already instantiated internally.
 - In order to successfully use `Scene`, you have to subclass it into a custom `~Scene` of your own, and register it to the engine to use.
 - Most of that functionality is featured in the `Engine` documentation, but this will be more in depth.
+- If you'd like to use fixed updates like `Unreal` and `Unity` game engines, use `on_fixed_update` as well as:
+    - `Interval`, an object containing very common `?/sec` interval values, like `30Hz`, `60Hz`, `120Hz`, etc.
+    - Use with `Engine`.`set_update_interval` (which sets the fixed update interval).
 
 ## How Scenes Work
 - The `Engine` only runs the game loop in the background, with enhanced functionality, but the `Scene` takes care of the rest.

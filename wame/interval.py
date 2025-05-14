@@ -1,7 +1,9 @@
-class Interval:
+from enum import Enum
+
+class Interval(Enum):
     '''Common Time Interval Values'''
     
-    HZ_1:float = 1
+    HZ_1:int = 1
     '''1Hz - 1 time/second - 1 FPS'''
 
     HZ_2:float = 0.5

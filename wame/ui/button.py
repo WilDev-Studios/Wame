@@ -111,7 +111,7 @@ class Button(Renderable):
             The exact position of this object from the top-left point
         '''
 
-        position = position if isinstance(position, IntVector2) else IntVector2.from_tuple(position)
+        position = position if isinstance(position, IntVector2) else IntVector2.from_iterable(position)
 
         if self._parent:
             position.x += self._parent.position.x
@@ -129,7 +129,7 @@ class Button(Renderable):
             The exact size of this object
         '''
 
-        self.size = size if isinstance(size, IntVector2) else IntVector2.from_tuple(size)
+        self.size = size if isinstance(size, IntVector2) else IntVector2.from_iterable(size)
 
     def set_scaled_position(self, position:FloatVector2) -> None:
         '''
@@ -141,7 +141,7 @@ class Button(Renderable):
             The scaled position of this object from the top-left point
         '''
 
-        position = position if isinstance(position, FloatVector2) else FloatVector2.from_tuple(position)
+        position = position if isinstance(position, FloatVector2) else FloatVector2.from_iterable(position)
 
         if position.x > 1 or position.x < 0 or position.y > 1 or position.y < 0:
             error:str = "Scaled position X, Y values must be between 0 and 1"
@@ -162,7 +162,7 @@ class Button(Renderable):
             The scaled size of this object
         '''
         
-        size = size if isinstance(size, FloatVector2) else FloatVector2.from_tuple(size)
+        size = size if isinstance(size, FloatVector2) else FloatVector2.from_iterable(size)
 
         if size.x > 1 or size.x < 0 or size.y > 1 or size.y < 0:
             error:str = "Scaled size X, Y values must be between 0 and 1"
