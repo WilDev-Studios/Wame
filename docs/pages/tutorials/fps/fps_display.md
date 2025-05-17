@@ -9,10 +9,8 @@ import pygame
 import wame
 
 class TutorialScene(wame.Scene):
-    def __init__(self, engine: wame.Engine) -> None:
-        super().__init__(engine) # All basic setup
-
-        #                                    Parent       Text       RGB Color                  Font
+    def on_init(self, *args, **kwargs) -> None:
+        #                            Parent       Text       RGB Color                  Font
         self.fps_text: Text = Text(self.frame, "FPS | 0", (125, 125, 125), pygame.font.SysFont("Ubuntu", 12))
         self.fps_text.set_pixel_position((5, 5)) # Sets the top-left of the text at `5, 5` on the screen
     
@@ -28,10 +26,10 @@ engine.set_scene("Tutorial")
 
 engine.start()
 ```
-You may be asking why there isn't a specific `draw`/`render` call for the `self.fps_text` object...good catch:
-- This isn't specifically called because the `fps_text`'s parent is `self.frame`, as you can see when it's instantiated
-- This is because the `UI` system of `wame` is rendered after the `on_render` method is called
-- Although `self.fps_text` isn't directly rendered itself, `self.frame` renders each frame, thus it's children as well (including `self.fps_text`)
+!!! Note
+    No `self.fps_text.render()` call is made because it's parent, `self.frame`, is automatically rendered (thus it's children as well) after `on_render`.
+!!! tip
+    For the sake of simplicity, the above is perfectly fine. However, a better approach is to use this in the `on_fixed_update` method instead of `on_update`, as it's updated every `60` times/second (`60 Hz`) by default. This is because it's very unnecessary to update an FPS counter every single frame, as most update it every second.
 
 However, if you want a more specific approach without using the `self.frame` (to be completely unrelated, for some reason):
 ```python
@@ -40,9 +38,7 @@ import wame
 import wame.ui as wui
 
 class TutorialScene(wame.Scene):
-    def __init__(self, engine: wame.Engine) -> None:
-        super().__init__(engine)
-
+    def on_init(self, *args, **kwargs) -> None:
         self.fps_text: wui.Text = wui.Text(self.frame, "FPS | 0", (125, 125, 125), pygame.font.SysFont("Ubuntu", 12))
         self.fps_text.set_pixel_position((5, 5))
 
@@ -72,9 +68,7 @@ import wame
 import wame.ui as wui
 
 class TutorialScene(wame.Scene):
-    def __init__(self, engine: wame.Engine) -> None:
-        super().__init__(engine)
-
+    def on_init(self, *args, **kwargs) -> None:
         self.fps_text: wui.Text = wui.Text(self.frame, "FPS | 0", (125, 125, 125), pygame.font.SysFont("Ubuntu", 12))
         self.fps_text.set_pixel_position((5, 5))
 

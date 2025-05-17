@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
 from typing import Any, Callable, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -14,35 +13,72 @@ from wame.vector import IntVector2
 from OpenGL.GL import *
 
 import pygame
+import time
+import warnings
 
-class Scene(ABC):
+def _warn_init_override(cls):
+    original = cls.__init__
+
+    def new(self, *args, **kwargs):
+        caller = self.__class__
+
+        if caller is not cls:
+            if "__init__" in caller.__dict__:
+                warnings.warn(
+                    f"{caller.__name__} overrides __init__ which is discouraged. Use on_init instead.",
+                    UserWarning, 2
+                )
+        
+        return original(self, *args, **kwargs)
+
+    cls.__init__ = new
+    return cls
+
+@_warn_init_override
+class Scene:
     '''Handles all events and rendering for the engine.'''
 
-    def __init__(self, engine:'Engine') -> None:
+    __slots__ = (
+        "engine", "screen", "frame", "_first_elapsed", "_events_first", "_events_update",
+        "_subscribers_key_pressed", "_subscribers_mouse_click", "_subscribers_mouse_move",
+        "tween"
+    )
+
+    def __init__(self, engine: 'Engine', *args, **kwargs) -> None:
         '''
         Warning
         -------
+        Do not override `__init__` in subclasses. Use `on_init` instead.
         All `Scene` objects/instances are managed and created internally by the `Engine`. At no point will any developer need to do anything more than define a subclass of `Scene`.
         '''
         
-        self.engine:'Engine' = engine
+        self.engine: 'Engine' = engine
         '''The engine running the scene.'''
 
-        self.screen:pygame.Surface = self.engine.screen
+        self.screen: pygame.Surface = self.engine.screen
         '''The screen rendering all objects.'''
 
-        self.frame:Frame = Frame(engine)
+        self.frame: Frame = Frame(engine)
         '''The UI frame responsible for handling all scene UI objects natively - Rendered each frame after `on_render` automatically, unless disabled.'''
-        self.frame.set_pixel_position((0, 0))
-        self.frame.set_pixel_size((self.screen.get_width(), self.screen.get_height()))
+        self.frame.set_pixel_transform((0, 0), (self.screen.get_width(), self.screen.get_height()))
 
-        self._first_elapsed:bool = False
+        self._first_elapsed: bool = False
         
         self._events_first: set[Callable[[], None]] = set()
         self._events_update: set[Callable[[], None]] = set()
+
+        self._subscribers_key_pressed: set[Callable[[int, int], None]] = set()
+        self._subscribers_mouse_click: set[Callable[[IntVector2, int], None]] = set()
+        self._subscribers_mouse_move: set[Callable[[IntVector2, IntVector2], None]] = set()
+
+        self._subscribers_key_pressed.add(self.on_key_pressed)
+        self._subscribers_mouse_click.add(self.on_mouse_pressed)
+        self._subscribers_mouse_move.add(self.on_mouse_move)
         
-        self.tween:Tween = Tween(self)
+        self.tween: Tween = Tween(self)
         '''The tweening object responsible for animating objects.'''
+
+        self.on_init(*args, **kwargs)
 
     def _check_events(self) -> None:
         for event in pygame.event.get():
@@ -59,7 +95,8 @@ class Scene(ABC):
             elif event.type == pygame.JOYHATMOTION:
                 self.on_joy_hat_motion(event.joy, event.hat, IntVector2.from_iterable(event.value))
             elif event.type == pygame.KEYDOWN:
-                self.on_key_pressed(event.key, event.mod)
+                for subscriber in self._subscribers_key_pressed:
+                    subscriber(event.key, event.mod)
             elif event.type == pygame.KEYUP:
                 self.on_key_released(event.key, event.mod)
             elif event.type == pygame.MOUSEBUTTONDOWN:
@@ -68,7 +105,8 @@ class Scene(ABC):
                 if event.button in [4, 5]:  # Scrolling shouldn't send a `MOUSEBUTTONDOWN` event
                     continue
 
-                self.on_mouse_pressed(mousePosition, event.button)
+                for subscriber in self._subscribers_mouse_click:
+                    subscriber(mousePosition, event.button)
             elif event.type == pygame.MOUSEBUTTONUP:
                 mousePosition: IntVector2 = IntVector2.from_iterable(event.pos)
 
@@ -79,7 +117,8 @@ class Scene(ABC):
             elif event.type == pygame.MOUSEMOTION:
                 mousePosition: IntVector2 = IntVector2.from_iterable(event.pos)
 
-                self.on_mouse_move(mousePosition, IntVector2.from_iterable(event.rel))
+                for subscriber in self._subscribers_mouse_move:
+                    subscriber(mousePosition, IntVector2.from_iterable(event.rel))
             elif event.type == pygame.MOUSEWHEEL:
                 mousePosition: IntVector2 = IntVector2.from_iterable(pygame.mouse.get_pos())
 
@@ -109,21 +148,23 @@ class Scene(ABC):
             elif event.type == pygame.WINDOWMOVED:
                 self.on_window_moved(IntVector2(event.x, event.y))
             elif event.type == pygame.WINDOWRESIZED:
-                self.on_window_resize(IntVector2.from_iterable(event.size))
+                self.on_window_resize(IntVector2(event.x, event.y))
             elif event.type == pygame.WINDOWRESTORED:
                 self.on_window_restored()
             elif event.type == pygame.WINDOWSHOWN:
                 self.on_window_shown()
     
     def _check_keys(self) -> None:
-        keys:pygame.key.ScancodeWrapper = pygame.key.get_pressed()
-        mods:int = pygame.key.get_mods()
+        keys: pygame.key.ScancodeWrapper = pygame.key.get_pressed()
+        mods: int = pygame.key.get_mods()
 
-        for key in range(len(keys)):
-            if not keys[key]:
+        event: Callable[[int, int], None] = self.on_key_pressed
+
+        for key, pressed in enumerate(keys):
+            if not pressed:
                 continue
 
-            self.on_key_pressing(key, mods)
+            event(key, mods)
     
     def _cleanup(self) -> None:
         self.on_cleanup()
@@ -144,13 +185,19 @@ class Scene(ABC):
         if self.engine._pipeline == Pipeline.PYGAME:
             self.engine.screen.fill(self.engine.background_color.to_tuple())
         elif self.engine._pipeline == Pipeline.OPENGL:
-            glClearColor(self.engine.background_color.nr, self.engine.background_color.ng, self.engine.background_color.nb, self.engine.background_color.a)
+            glClearColor(self.engine.background_color.nr, self.engine.background_color.ng, self.engine.background_color.nb, 1.0)
 
         self.on_render()
         self.frame.ask_render()
 
         pygame.display.flip()
-        self.engine._deltaTime = self.engine._clock.tick(self.engine._set_fps) / 1000.0
+        
+        target_frame_time: float = 1.0 / self.engine._set_fps if self.engine._set_fps > 0 else 0
+        elapsed: float = time.perf_counter() - self.engine._last_frame_time
+        sleep_time: float = target_frame_time - elapsed
+
+        if sleep_time > 0:
+            time.sleep(sleep_time)
 
     def _update(self) -> None:
         if not self._first_elapsed:
@@ -169,8 +216,8 @@ class Scene(ABC):
         -------
         ```python
         class MyScene(wame.Scene):
-            def __init__(self, engine) -> None:
-                super().__init__(engine)
+            def on_init(self, *args, **kwargs) -> None:
+                ...
             
             def on_cleanup(self) -> None:
                 ... # Terminate background threads, save data, etc.
@@ -187,8 +234,8 @@ class Scene(ABC):
         -------
         ```python
         class MyScene(wame.Scene):
-            def __init__(self, engine) -> None:
-                super().__init__(engine)
+            def on_init(self, *args, **kwargs) -> None:
+                ...
             
             def on_first(self) -> None:
                 ... # Start game timers, etc.
@@ -213,8 +260,8 @@ class Scene(ABC):
         -------
         ```python
         class MyScene(wame.Scene):
-            def __init__(self, engine) -> None:
-                super().__init__(engine)
+            def on_init(self, *args, **kwargs) -> None:
+                ...
             
             def on_fixed_update(self) -> None:
                 ... # Update positions, text, etc.
@@ -223,7 +270,27 @@ class Scene(ABC):
         
         ...
 
-    def on_joy_axis_motion(self, stick:int, axis:int, position:float) -> None:
+    def on_init(self, *args, **kwargs) -> None:
+        '''
+        Code below should be executed after the instance has been initialized by the engine.
+        
+        Info
+        ----
+        This should be treated as any other `__init__` method.
+        
+        Example
+        -------
+        ```python
+        class MyScene(wame.Scene):
+            def on_init(self, *args, **kwargs) -> None:
+                # Initialize variables, logic, etc.
+                ...
+        ```
+        '''
+
+        ...
+
+    def on_joy_axis_motion(self, stick: int, axis: int, position: float) -> None:
         '''
         Code below should be executed when a joystick's axis moves
         
@@ -231,8 +298,8 @@ class Scene(ABC):
         -------
         ```python
         class MyScene(wame.Scene):
-            def __init__(self, engine) -> None:
-                super().__init__(engine)
+            def on_init(self, *args, **kwargs) -> None:
+                ...
             
             def on_joy_axis_motion(self, stick:int, axis:int, position:float) -> None:
                 ...
@@ -241,7 +308,7 @@ class Scene(ABC):
         
         ...
     
-    def on_joy_button_down(self, stick:int, button:int) -> None:
+    def on_joy_button_down(self, stick: int, button: int) -> None:
         '''
         Code below should be executed when a joystick's button gets pressed
         
@@ -249,8 +316,8 @@ class Scene(ABC):
         -------
         ```python
         class MyScene(wame.Scene):
-            def __init__(self, engine) -> None:
-                super().__init__(engine)
+            def on_init(self, *args, **kwargs) -> None:
+                ...
             
             def on_joy_button_down(self, stick:int, button:int) -> None:
                 ...
@@ -259,7 +326,7 @@ class Scene(ABC):
         
         ...
     
-    def on_joy_button_up(self, stick:int, button:int) -> None:
+    def on_joy_button_up(self, stick: int, button: int) -> None:
         '''
         Code below should be executed when a joystick's button gets released
         
@@ -267,8 +334,8 @@ class Scene(ABC):
         -------
         ```python
         class MyScene(wame.Scene):
-            def __init__(self, engine) -> None:
-                super().__init__(engine)
+            def on_init(self, *args, **kwargs) -> None:
+                ...
             
             def on_joy_button_up(self, stick:int, button:int) -> None:
                 ...
@@ -277,7 +344,7 @@ class Scene(ABC):
         
         ...
     
-    def on_joy_device_added(self, device:int) -> None:
+    def on_joy_device_added(self, device: int) -> None:
         '''
         Code below should be executed when a new joystick device is added
         
@@ -285,8 +352,8 @@ class Scene(ABC):
         -------
         ```python
         class MyScene(wame.Scene):
-            def __init__(self, engine) -> None:
-                super().__init__(engine)
+            def on_init(self, *args, **kwargs) -> None:
+                ...
             
             def on_joy_device_added(self, device:int) -> None:
                 ...
@@ -295,7 +362,7 @@ class Scene(ABC):
         
         ...
     
-    def on_joy_device_removed(self, device:int) -> None:
+    def on_joy_device_removed(self, device: int) -> None:
         '''
         Code below should be executed when an old joystick device is removed
         
@@ -303,8 +370,8 @@ class Scene(ABC):
         -------
         ```python
         class MyScene(wame.Scene):
-            def __init__(self, engine) -> None:
-                super().__init__(engine)
+            def on_init(self, *args, **kwargs) -> None:
+                ...
             
             def on_joy_device_removed(self, device:int) -> None:
                 ...
@@ -313,7 +380,7 @@ class Scene(ABC):
         
         ...
     
-    def on_joy_hat_motion(self, stick:int, hat:int, position:IntVector2) -> None:
+    def on_joy_hat_motion(self, stick: int, hat: int, position: IntVector2) -> None:
         '''
         Code below should be executed when a joystick's hat/D-Pad moves
         
@@ -321,8 +388,8 @@ class Scene(ABC):
         -------
         ```python
         class MyScene(wame.Scene):
-            def __init__(self, engine) -> None:
-                super().__init__(engine)
+            def on_init(self, *args, **kwargs) -> None:
+                ...
             
             def on_joy_hat_motion(self, stick:int, hat:int, position:wame.IntVector2) -> None:
                 ...
@@ -331,7 +398,7 @@ class Scene(ABC):
         
         ...
 
-    def on_key_pressed(self, key:int, mods:int) -> None:
+    def on_key_pressed(self, key: int, mods: int) -> None:
         '''
         Code below should be executed when a key is pressed
 
@@ -339,8 +406,8 @@ class Scene(ABC):
         -------
         ```python
         class MyScene(wame.Scene):
-            def __init__(self, engine) -> None:
-                super().__init__(engine)
+            def on_init(self, *args, **kwargs) -> None:
+                ...
             
             def on_key_pressed(self, key:int, mods:int) -> None:
                 ... # Pause game, display UI, etc.
@@ -349,7 +416,7 @@ class Scene(ABC):
         
         ...
     
-    def on_key_pressing(self, key:int, mods:int) -> None:
+    def on_key_pressing(self, key: int, mods: int) -> None:
         '''
         Code below should be executed when a key is being pressed
 
@@ -357,8 +424,8 @@ class Scene(ABC):
         -------
         ```python
         class MyScene(wame.Scene):
-            def __init__(self, engine) -> None:
-                super().__init__(engine)
+            def on_init(self, *args, **kwargs) -> None:
+                ...
             
             def on_key_pressing(self, key:int, mods:int) -> None:
                 ... # Move forward, honk horn, etc.
@@ -367,7 +434,7 @@ class Scene(ABC):
         
         ...
     
-    def on_key_released(self, key:int, mods:int) -> None:
+    def on_key_released(self, key: int, mods: int) -> None:
         '''
         Code below should be executed when a key is released
 
@@ -375,8 +442,8 @@ class Scene(ABC):
         -------
         ```python
         class MyScene(wame.Scene):
-            def __init__(self, engine) -> None:
-                super().__init__(engine)
+            def on_init(self, *args, **kwargs) -> None:
+                ...
             
             def on_key_released(self, key:int, mods:int) -> None:
                 ... # Stop moving forward, etc.
@@ -385,7 +452,7 @@ class Scene(ABC):
         
         ...
     
-    def on_mouse_move(self, mouse_position:IntVector2, relative:IntVector2) -> None:
+    def on_mouse_move(self, mouse_position: IntVector2, relative: IntVector2) -> None:
         '''
         Code below should be executed when the mouse moves
 
@@ -393,8 +460,8 @@ class Scene(ABC):
         -------
         ```python
         class MyScene(wame.Scene):
-            def __init__(self, engine) -> None:
-                super().__init__(engine)
+            def on_init(self, *args, **kwargs) -> None:
+                ...
             
             def on_mouse_move(self, mouse_position:wame.IntVector2, relative:wame.IntVector2) -> None:
                 print(f"Mouse was moved {relative} amount @ {mouse_position}")
@@ -403,7 +470,7 @@ class Scene(ABC):
         
         ...
     
-    def on_mouse_pressed(self, mouse_position:IntVector2, button:int) -> None:
+    def on_mouse_pressed(self, mouse_position: IntVector2, button: int) -> None:
         '''
         Code below should be executed when a mouse button was pressed
 
@@ -411,8 +478,8 @@ class Scene(ABC):
         -------
         ```python
         class MyScene(wame.Scene):
-            def __init__(self, engine) -> None:
-                super().__init__(engine)
+            def on_init(self, *args, **kwargs) -> None:
+                ...
             
             def on_mouse_pressed(self, mouse_position:wame.IntVector2, button:int) -> None:
                 ... # Start shooting, rotate character, etc.
@@ -421,7 +488,7 @@ class Scene(ABC):
         
         ...
     
-    def on_mouse_released(self, mouse_position:IntVector2, button:int) -> None:
+    def on_mouse_released(self, mouse_position: IntVector2, button: int) -> None:
         '''
         Code below should be executed when a mouse button was released
 
@@ -429,8 +496,8 @@ class Scene(ABC):
         -------
         ```python
         class MyScene(wame.Scene):
-            def __init__(self, engine) -> None:
-                super().__init__(engine)
+            def on_init(self, *args, **kwargs) -> None:
+                ...
             
             def on_mouse_released(self, mouse_position:wame.IntVector2, button:int) -> None:
                 ... # Shoot arrow, stop shooting, etc.
@@ -439,7 +506,7 @@ class Scene(ABC):
         
         ...
     
-    def on_mouse_wheel_scroll(self, mouse_position:IntVector2, amount:int) -> None:
+    def on_mouse_wheel_scroll(self, mouse_position: IntVector2, amount: int) -> None:
         '''
         Code below should be executed when the scroll wheel moves
 
@@ -447,8 +514,8 @@ class Scene(ABC):
         -------
         ```python
         class MyScene(wame.Scene):
-            def __init__(self, engine) -> None:
-                super().__init__(engine)
+            def on_init(self, *args, **kwargs) -> None:
+                ...
             
             def on_mouse_wheel_scroll(self, mouse_position:wame.IntVector2, amount:int) -> None:
                 if amount > 0:
@@ -468,15 +535,15 @@ class Scene(ABC):
         -------
         ```python
         class MyScene(wame.Scene):
-            def __init__(self, engine) -> None:
-                super().__init__(engine)
+            def on_init(self, *args, **kwargs) -> None:
+                ...
 
             def on_tweened(self, object_: Any) -> None:
                 ...
         ```
         '''
 
-    def on_user_event(self, event:pygame.event.Event) -> None:
+    def on_user_event(self, event: pygame.event.Event) -> None:
         '''
         Code below should be executed when a custom user event is called
         
@@ -484,8 +551,8 @@ class Scene(ABC):
         -------
         ```python
         class MyScene(wame.Scene):
-            def __init__(self, engine) -> None:
-                super().__init__(engine)
+            def on_init(self, *args, **kwargs) -> None:
+                ...
             
             def on_user_event(self, event:pygame.event.Event) -> None:
                 ...
@@ -502,8 +569,8 @@ class Scene(ABC):
         -------
         ```python
         class MyScene(wame.Scene):
-            def __init__(self, engine) -> None:
-                super().__init__(engine)
+            def on_init(self, *args, **kwargs) -> None:
+                ...
             
             def on_window_close(self) -> None:
                 ...
@@ -520,8 +587,8 @@ class Scene(ABC):
         -------
         ```python
         class MyScene(wame.Scene):
-            def __init__(self, engine) -> None:
-                super().__init__(engine)
+            def on_init(self, *args, **kwargs) -> None:
+                ...
             
             def on_window_display_changed(self) -> None:
                 ...
@@ -538,8 +605,8 @@ class Scene(ABC):
         -------
         ```python
         class MyScene(wame.Scene):
-            def __init__(self, engine) -> None:
-                super().__init__(engine)
+            def on_init(self, *args, **kwargs) -> None:
+                ...
             
             def on_window_focus_gained(self) -> None:
                 ...
@@ -556,8 +623,8 @@ class Scene(ABC):
         -------
         ```python
         class MyScene(wame.Scene):
-            def __init__(self, engine) -> None:
-                super().__init__(engine)
+            def on_init(self, *args, **kwargs) -> None:
+                ...
             
             def on_window_focus_lost(self) -> None:
                 ...
@@ -574,8 +641,8 @@ class Scene(ABC):
         -------
         ```python
         class MyScene(wame.Scene):
-            def __init__(self, engine) -> None:
-                super().__init__(engine)
+            def on_init(self, *args, **kwargs) -> None:
+                ...
             
             def on_window_hidden(self) -> None:
                 ...
@@ -592,8 +659,8 @@ class Scene(ABC):
         -------
         ```python
         class MyScene(wame.Scene):
-            def __init__(self, engine) -> None:
-                super().__init__(engine)
+            def on_init(self, *args, **kwargs) -> None:
+                ...
             
             def on_window_maximized(self) -> None:
                 ...
@@ -610,8 +677,8 @@ class Scene(ABC):
         -------
         ```python
         class MyScene(wame.Scene):
-            def __init__(self, engine) -> None:
-                super().__init__(engine)
+            def on_init(self, *args, **kwargs) -> None:
+                ...
             
             def on_window_minimized(self) -> None:
                 ...
@@ -628,8 +695,8 @@ class Scene(ABC):
         -------
         ```python
         class MyScene(wame.Scene):
-            def __init__(self, engine) -> None:
-                super().__init__(engine)
+            def on_init(self, *args, **kwargs) -> None:
+                ...
             
             def on_window_mouse_enter(self) -> None:
                 ...
@@ -646,8 +713,8 @@ class Scene(ABC):
         -------
         ```python
         class MyScene(wame.Scene):
-            def __init__(self, engine) -> None:
-                super().__init__(engine)
+            def on_init(self, *args, **kwargs) -> None:
+                ...
             
             def on_window_mouse_leave(self) -> None:
                 ...
@@ -656,7 +723,7 @@ class Scene(ABC):
 
         ...
     
-    def on_window_moved(self, position:IntVector2) -> None:
+    def on_window_moved(self, position: IntVector2) -> None:
         '''
         Code below should be executed when the window moves
         
@@ -664,8 +731,8 @@ class Scene(ABC):
         -------
         ```python
         class MyScene(wame.Scene):
-            def __init__(self, engine) -> None:
-                super().__init__(engine)
+            def on_init(self, *args, **kwargs) -> None:
+                ...
             
             def on_window_moved(self, position:wame.IntVector2) -> None:
                 ...
@@ -674,7 +741,7 @@ class Scene(ABC):
 
         ...
 
-    def on_window_resize(self, size:IntVector2) -> None:
+    def on_window_resize(self, size: IntVector2) -> None:
         '''
         Code below should be executed when the window is resized
         
@@ -682,8 +749,8 @@ class Scene(ABC):
         -------
         ```python
         class MyScene(wame.Scene):
-            def __init__(self, engine) -> None:
-                super().__init__(engine)
+            def on_init(self, *args, **kwargs) -> None:
+                ...
             
             def on_window_resize(self, size:wame.IntVector2) -> None:
                 ... # Edit OpenGL viewport, etc.
@@ -700,8 +767,8 @@ class Scene(ABC):
         -------
         ```python
         class MyScene(wame.Scene):
-            def __init__(self, engine) -> None:
-                super().__init__(engine)
+            def on_init(self, *args, **kwargs) -> None:
+                ...
             
             def on_window_restored(self) -> None:
                 ...
@@ -718,8 +785,8 @@ class Scene(ABC):
         -------
         ```python
         class MyScene(wame.Scene):
-            def __init__(self, engine) -> None:
-                super().__init__(engine)
+            def on_init(self, *args, **kwargs) -> None:
+                ...
             
             def on_window_shown(self) -> None:
                 ...
@@ -728,7 +795,6 @@ class Scene(ABC):
 
         ...
 
-    @abstractmethod
     def on_render(self) -> None:
         '''
         Code below should be executed every frame to render all objects after being updated
@@ -737,8 +803,8 @@ class Scene(ABC):
         -------
         ```python
         class MyScene(wame.Scene):
-            def __init__(self, engine) -> None:
-                super().__init__(engine)
+            def on_init(self, *args, **kwargs) -> None:
+                ...
             
             def on_render(self) -> None:
                 ... # Render text, objects, etc.
@@ -747,7 +813,6 @@ class Scene(ABC):
 
         ...
 
-    @abstractmethod
     def on_update(self) -> None:
         '''
         Code below should be executed every frame before objects are rendered to provide updates to instance states
@@ -756,8 +821,8 @@ class Scene(ABC):
         -------
         ```python
         class MyScene(wame.Scene):
-            def __init__(self, engine) -> None:
-                super().__init__(engine)
+            def on_init(self, *args, **kwargs) -> None:
+                ...
             
             def on_update(self) -> None:
                 ... # Update positions, text, etc.

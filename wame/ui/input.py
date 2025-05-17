@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-from typing import Callable
+from typing import Callable, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from wame.scene import Scene
 
 from wame.color.rgb import ColorRGBA
 from wame.utils.keys import KEYS
@@ -16,24 +19,31 @@ import pygame
 import wame
 
 class CheckboxInput(Renderable):
-    '''UI Checkbox Input'''
+    '''UI Checkbox Input.'''
 
-    def __init__(self, parent:'Frame', checkedColor:ColorRGBA, uncheckedColor:ColorRGBA, *, default:bool=False, y_flipped:bool=False) -> None:
+    __slots__ = (
+        "_parent", "_children", "_checked_color", "unchecked_color", "state",
+        "_border_color", "_border_width", "_flipped", "_callback",
+    )
+
+    def __init__(self, scene: 'Scene', parent: Frame, checked_color: ColorRGBA, unchecked_color: ColorRGBA, *, default: bool=False, y_flipped: bool=False) -> None:
         '''
-        Create a UI checkbox input
+        Create a UI checkbox input.
         
         Parameters
         ----------
-        parent : wame.ui.frame.Frame
-            The parent of this input
-        checkedColor : wame.color.rgb.ColorRGBA
-            The color of the box when checked (`True`/active)
-        uncheckedColor : wame.color.rgb.ColorRGBA
-            The color of the box when unchecked (`False`/inactive)
+        scene : Scene
+            The scene handling this input to dispatch events.
+        parent : Frame
+            The parent of this input.
+        checked_color : ColorRGBA
+            The color of the box when checked (`True`/active).
+        unchecked_color : ColorRGBA
+            The color of the box when unchecked (`False`/inactive).
         default : bool
-            The original state of the input before any interaction
+            The original state of the input before any interaction.
         y_flipped : bool
-            If it should be rendered with the Y-axis flipped - May be necessary depending on your OpenGL setup
+            If it should be rendered with the Y-axis flipped - May be necessary depending on your OpenGL setup.
 
         Info
         ----
@@ -44,11 +54,13 @@ class CheckboxInput(Renderable):
 
         parent.add_child(self)
         self._parent = parent
+        scene._subscribers_mouse_click.add(self._check_click)
 
         self._children:list[Renderable] = []
 
-        self._checked_color:ColorRGBA = checkedColor if isinstance(checkedColor, ColorRGBA) else ColorRGBA.from_tuple(checkedColor)
-        self._unchecked_color:ColorRGBA = uncheckedColor if isinstance(uncheckedColor, ColorRGBA) else ColorRGBA.from_tuple(uncheckedColor)
+        self._checked_color:ColorRGBA = checked_color if isinstance(checked_color, ColorRGBA) else ColorRGBA.from_iterable(checked_color)
+        self._unchecked_color:ColorRGBA = unchecked_color if isinstance(unchecked_color, ColorRGBA) else ColorRGBA.from_iterable(unchecked_color)
+
         self.state:bool = default
         '''The current state of the checkbox (`True`/`False`)'''
 
@@ -59,16 +71,7 @@ class CheckboxInput(Renderable):
 
         self._callback:Callable[[bool], None] = None
 
-    def check_click(self, position:IntVector2) -> None:
-        '''
-        Check if the location in which a mouse click is able to interact with this input
-        
-        Parameters
-        ----------
-        position : wame.vector.xy.IntVector2
-            The X, Y vector/position of the mouse
-        '''
-
+    def _check_click(self, position: IntVector2, _: int) -> None:
         if not self.rect.collidepoint(position.to_tuple()):
             return
         
@@ -79,10 +82,10 @@ class CheckboxInput(Renderable):
 
     def render(self) -> None:
         '''
-        Render this input and it's children to the screen
+        Render this input and it's children to the screen.
         '''
         
-        if not self.position or not self.size:
+        if not self.rect:
             error:str = "The frame must have its size and position set before rendering"
             raise ValueError(error)
     
@@ -91,12 +94,12 @@ class CheckboxInput(Renderable):
                 self._engine.screen, self._checked_color.to_tuple() if self.state else self._unchecked_color.to_tuple(), self.rect
             )
         elif self._engine._pipeline == wame.Pipeline.OPENGL:
-            posY:int = self.position.y
-            posWidth:int = self.position.x + self.size.x
-            posHeight:int = self.position.y + self.size.y
+            posY:int = self.rect.top
+            posWidth:int = self.rect.left + self.rect.width
+            posHeight:int = self.rect.top + self.rect.height
 
             if not self._flipped:
-                posY = self._engine.screen.get_height() - (self.position.y + self.size.y)
+                posY = self._engine.screen.get_height() - (posY + self.rect.height)
 
             glPushMatrix()
 
@@ -105,16 +108,17 @@ class CheckboxInput(Renderable):
                 glColor4f(*self._checked_color.to_tuple())
             else:
                 glColor4f(*self._unchecked_color.to_tuple())
+                
             if self._flipped:
-                glVertex2f(self.position.x, posHeight)
+                glVertex2f(self.rect.left, posHeight)
                 glVertex2f(posWidth, posHeight)
                 glVertex2f(posWidth, posY)
-                glVertex2f(self.position.x, posY)
+                glVertex2f(self.rect.left, posY)
             else:
-                glVertex2f(self.position.x, posY)
+                glVertex2f(self.rect.left, posY)
                 glVertex2f(posWidth, posY)
                 glVertex2f(posWidth, posHeight)
-                glVertex2f(self.position.x, posHeight)
+                glVertex2f(self.rect.left, posHeight)
             glEnd()
 
             glPopMatrix()
@@ -125,17 +129,17 @@ class CheckboxInput(Renderable):
             if self._engine._pipeline == wame.Pipeline.PYGAME:
                 for index in range(self._border_width):
                     pygame.draw.lines(self._engine.screen, self._border_color.to_tuple(), True, [
-                        (self.position.x + index, self.position.y + index), (self.position.x + self.size.x - index, self.position.y + index),
-                        (self.position.x + self.size.x - index, self.position.y + self.size.y - index), (self.position.x + index, self.position.y + self.size.y - index)
+                        (self.rect.left + index, self.rect.top + index), (self.rect.left + self.rect.width - index, self.rect.top + index),
+                        (self.rect.left + self.rect.width - index, self.rect.top + self.rect.height - index), (self.rect.left + index, self.rect.top + self.rect.height - index)
                     ])
             elif self._engine._pipeline == wame.Pipeline.OPENGL:
-                posX:int = self.position.x
-                posY:int = self.position.y
-                posWidth:int = self.position.x + self.size.x
-                posHeight:int = self.position.y + self.size.y
+                posX:int = self.rect.left
+                posY:int = self.rect.top
+                posWidth:int = self.rect.left + self.rect.width
+                posHeight:int = self.rect.top + self.rect.height
 
                 if not self._flipped:
-                    posY = self._engine.screen.get_height() - (self.position.y + self.size.y)
+                    posY = self._engine.screen.get_height() - (self.rect.top + self.rect.height)
 
                 for index in range(self._border_width):
                     glPushMatrix()
@@ -160,152 +164,121 @@ class CheckboxInput(Renderable):
         for child in self._children:
             child.ask_render()
     
-    def set_border(self, color:ColorRGBA, width:int) -> None:
+    def set_border(self, color: ColorRGBA, width: int) -> None:
         '''
-        Set the border of this object
+        Set the border of this object.
         
         Parameters
         ----------
-        color : wame.color.rgb.ColorRGBA
-            The color to set the border to
+        color : ColorRGBA
+            The color to set the border to.
         width : int
-            The width of the border
+            The width of the border.
         '''
         
-        self._border_color = color if isinstance(color, ColorRGBA) else ColorRGBA.from_tuple(color)
+        self._border_color = color if isinstance(color, ColorRGBA) else ColorRGBA.from_iterable(color)
         self._border_width = width
 
-    def set_callback(self, func:Callable[[bool], None]) -> None:
+    def set_callback(self, func: Callable[[bool], None]) -> None:
         '''
-        Set the callback method for when this input is edited/activated/deactivated
+        Set the callback method for when this input is edited/activated/deactivated.
         
         Parameters
         ----------
         func : typing.Callable[[bool], None]
-            The callback method to call - Takes the state of the input (`True`/`False`) as the only parameter
+            The callback method to call - Takes the state of the input (`True`/`False`) as the only parameter.
         '''
 
         self._callback = func
 
-    def set_pixel_position(self, position:IntVector2) -> None:
+    def set_pixel_transform(self, position: IntVector2, size: IntVector2) -> None:
         '''
-        Set the exact pixel position of this object
+        Set the exact pixel transform (position, size) of this object.
         
         Parameters
         ----------
-        position : wame.vector.xy.IntVector2
-            The exact position of this object from the top-left point
+        position : IntVector2
+            The exact position of this object from the top-left point.
+        size : IntVector2
+            The exact size of this object.
         '''
-        
+
         position = position if isinstance(position, IntVector2) else IntVector2.from_iterable(position)
+        position.x += self._parent.rect.left
+        position.y += self._parent.rect.top
 
-        if self._parent:
-            position.x += self._parent.position.x
-            position.y += self._parent.position.y
-        
-        self.position = position
+        size = size if isinstance(size, IntVector2) else IntVector2.from_iterable(size)
 
-    def set_pixel_size(self, size:IntVector2) -> None:
-        '''
-        Set the exact pixel size of this object
-        
-        Parameters
-        ----------
-        size : wame.vector.xy.IntVector2
-            The exact size of this object
-        '''
-        
-        self.size = size if isinstance(size, IntVector2) else IntVector2.from_iterable(size)
-
-    def set_scaled_position(self, position:FloatVector2) -> None:
-        '''
-        Set the scaled position of this object
-        
-        Parameters
-        ----------
-        position : wame.vector.xy.FloatVector2
-            The scaled position of this object from the top-left point
-        
-        Raises
-        ------
-        ValueError
-            If the provided positional values exceed `0`-`1`
-        '''
-        
-        position = position if isinstance(position, FloatVector2) else FloatVector2.from_iterable(position)
-
-        if position.x > 1 or position.x < 0 or position.y > 1 or position.y < 0:
-            error:str = "Scaled position X, Y values must be between 0 and 1"
-            raise ValueError(error)
-        
-        newPosition:IntVector2 = IntVector2(0, 0)
-
-        if not self._parent:
-            newPosition.x = int(self._engine.screen.get_width() * position.x)
-            newPosition.y = int(self._engine.screen.get_height() * position.y)
-        else:
-            newPosition.x = int(self._parent.position.x + (self._parent.size.x * position.x))
-            newPosition.y = int(self._parent.position.y + (self._parent.size.y * position.y))
-
-        self.position = newPosition
+        self.rect = pygame.Rect(*position, *size)
     
-    def set_scaled_size(self, size:IntVector2) -> None:
+    def set_scaled_transform(self, position: FloatVector2, size: FloatVector2) -> None:
         '''
-        Set the scaled size of this object
+        Set the scaled transform (position, size) of this object.
         
         Parameters
         ----------
-        size : wame.vector.xy.IntVector2
-            The scaled size of this object
-        
-        Raises
-        ------
-        ValueError
-            If the provided size values exceed `0`-`1`
+        position : FloatVector2
+            The scaled position of this object from the top-left point.
+        size : FloatVector2
+            The scaled size of this object.
         '''
-        
+
+        position = position if isinstance(position, FloatVector2) else FloatVector2.from_iterable(position)
         size = size if isinstance(size, FloatVector2) else FloatVector2.from_iterable(size)
 
-        if size.x > 1 or size.x < 0 or size.y > 1 or size.y < 0:
-            error:str = "Scaled size X, Y values must be between 0 and 1"
+        if position.x < 0 or position.x > 1 or position.y < 0 or position.y > 1:
+            error: str = "Scaled position X, Y values must be between 0 and 1."
             raise ValueError(error)
-    
-        newSize:IntVector2 = IntVector2(0, 0)
+        
+        if size.x < 0 or size.x > 1 or size.y < 0 or size.y > 1:
+            error: str = "Scaled size X, Y values must be between 0 and 1."
+            raise ValueError(error)
+        
+        position = IntVector2(
+            int(self._parent.rect.left + (self._parent.rect.width * position.x)),
+            int(self._parent.rect.top + (self._parent.rect.height * position.y))
+        )
+        size = IntVector2(
+            int(self._parent.rect.width * size.x),
+            int(self._parent.rect.height * size.y)
+        )
 
-        if not self._parent:
-            newSize.x = int(self._engine.screen.get_width() * size.x)
-            newSize.y = int(self._engine.screen.get_height() * size.y)
-        else:
-            newSize.x = int(self._parent.size.x * size.x)
-            newSize.y = int(self._parent.size.y * size.y)
-
-        self.size = newSize
+        self.rect = pygame.Rect(*position, *size)
 
 class TextInput(Renderable):
-    '''UI Text Input'''
+    '''UI Text Input.'''
 
-    def __init__(self, parent:'Frame', textColor:ColorRGBA, font:pygame.font.Font, *, default:str=None, yFlipped:bool=False) -> None:
+    __slots__ = (
+        "_parent", "_children", "_color", "_border_color", "border_width",
+        "_flipped", "text", "_active", "_callback", "_predicate",
+    )
+
+    def __init__(self, scene: 'Scene', parent: Frame, text_color: ColorRGBA, font: pygame.font.Font, *, default: str=None, y_flipped: bool=False) -> None:
         '''
-        Create a UI text input
+        Create a UI text input.
         
         Parameters
         ----------
-        parent : wame.ui.frame.Frame
-            The parent of this input
-        textColor : wame.color.rgb.ColorRGBA
-            The color of the text inside of the input
+        scene : Scene
+            The scene handling this input for automatic event dispatching.
+        parent : Frame
+            The parent of this input.
+        text_color : ColorRGBA
+            The color of the text inside of the input.
         font : pygame.font.Font
-            The font of the text inside of the input
+            The font of the text inside of the input.
         default : str
-            The original text to show in the input before any interaction
-        yFlipped : bool
-            If it should be rendered with the Y-axis flipped - May be necessary depending on your OpenGL setup
+            The original text to show in the input before any interaction.
+        y_flipped : bool
+            If it should be rendered with the Y-axis flipped - May be necessary depending on your OpenGL setup.
         '''
 
         super().__init__(parent._engine)
 
         parent.add_child(self)
         self._parent = parent
+        scene._subscribers_mouse_click.add(self._check_click)
+        scene._subscribers_key_pressed.add(self._check_key)
 
         self._children:list[Renderable] = []
 
@@ -314,24 +287,16 @@ class TextInput(Renderable):
         self._border_color:ColorRGBA = None
         self._border_width:int = None
 
-        self._flipped:bool = yFlipped
+        self._flipped:bool = y_flipped
         
-        self.text:Text = Text(self, default if default else "", textColor, font, yFlipped)
-        '''The internal text object of this input'''
+        self.text:Text = Text(self, default if default else "", text_color, font, y_flipped)
+        '''The internal text object of this input.'''
 
         self._active:bool = False
         self._callback:Callable[[None], None] = None
+        self._predicate: Callable[[int, int], bool] = None
 
-    def check_click(self, position:IntVector2) -> None:
-        '''
-        Check if the location in which a mouse click is able to interact with this input
-        
-        Parameters
-        ----------
-        position : wame.vector.xy.IntVector2
-            The X, Y vector/position of the mouse
-        '''
-
+    def _check_click(self, position: IntVector2, _: int) -> None:
         if self.rect.collidepoint(position.to_tuple()):
             active:bool = self._active
             self._active = True
@@ -345,25 +310,12 @@ class TextInput(Renderable):
             if active and self._callback:
                 self._callback()
     
-    def check_key(self, key:int, mods:int, predicate:Callable[[int, int], bool]=None) -> None:
-        '''
-        Check if a key/mod combination is able to interact with this input (if active)
-        
-        Parameters
-        ----------
-        key : int
-            The raw `pygame` keycode input
-        mods : int
-            The raw `pygame` key modifications
-        predicate : typing.Callable[[int, int], bool]
-            A function object that should be used to filter out whether the input should or should not be accepted
-        '''
-
+    def _check_key(self, key: int, mods: int) -> None:
         if not self._active:
             return
         
-        if predicate:
-            if not predicate(key, mods):
+        if self._predicate:
+            if not self._predicate(key, mods):
                 return
             
         strKey:str = KEYS.get((key, mods), None)
@@ -386,10 +338,10 @@ class TextInput(Renderable):
 
     def render(self) -> None:
         '''
-        Render this input and it's children to the screen
+        Render this input and it's children to the screen.
         '''
         
-        if not self.position or not self.size:
+        if not self.rect:
             error:str = "The frame must have its size and position set before rendering"
             raise ValueError(error)
     
@@ -399,27 +351,27 @@ class TextInput(Renderable):
                     self._engine.screen, self._color.to_tuple(), self.rect
                 )
             elif self._engine._pipeline == wame.Pipeline.OPENGL:
-                posY:int = self.position.y
-                posWidth:int = self.position.x + self.size.x
-                posHeight:int = self.position.y + self.size.y
+                posY:int = self.rect.top
+                posWidth:int = self.rect.left + self.rect.width
+                posHeight:int = self.rect.top + self.rect.height
 
                 if not self._flipped:
-                    posY = self._engine.screen.get_height() - (self.position.y + self.size.y)
+                    posY = self._engine.screen.get_height() - (self.rect.top + self.rect.height)
 
                 glPushMatrix()
 
                 glBegin(GL_QUADS)
                 glColor4f(*self._color.to_tuple())
                 if self._flipped:
-                    glVertex2f(self.position.x, posHeight)
+                    glVertex2f(self.rect.left, posHeight)
                     glVertex2f(posWidth, posHeight)
                     glVertex2f(posWidth, posY)
-                    glVertex2f(self.position.x, posY)
+                    glVertex2f(self.rect.left, posY)
                 else:
-                    glVertex2f(self.position.x, posY)
+                    glVertex2f(self.rect.left, posY)
                     glVertex2f(posWidth, posY)
                     glVertex2f(posWidth, posHeight)
-                    glVertex2f(self.position.x, posHeight)
+                    glVertex2f(self.rect.left, posHeight)
                 glEnd()
 
                 glPopMatrix()
@@ -430,17 +382,17 @@ class TextInput(Renderable):
             if self._engine._pipeline == wame.Pipeline.PYGAME:
                 for index in range(self._border_width):
                     pygame.draw.lines(self._engine.screen, self._border_color.to_tuple(), True, [
-                        (self.position.x + index, self.position.y + index), (self.position.x + self.size.x - index, self.position.y + index),
-                        (self.position.x + self.size.x - index, self.position.y + self.size.y - index), (self.position.x + index, self.position.y + self.size.y - index)
+                        (self.rect.left + index, self.rect.top + index), (self.rect.left + self.rect.width - index, self.rect.top + index),
+                        (self.rect.left + self.rect.width - index, self.rect.top + self.rect.height - index), (self.rect.left + index, self.rect.top + self.rect.height - index)
                     ])
             elif self._engine._pipeline == wame.Pipeline.OPENGL:
-                posX:int = self.position.x
-                posY:int = self.position.y
-                posWidth:int = self.position.x + self.size.x
-                posHeight:int = self.position.y + self.size.y
+                posX:int = self.rect.left
+                posY:int = self.rect.top
+                posWidth:int = self.rect.left + self.rect.width
+                posHeight:int = self.rect.top + self.rect.height
 
                 if not self._flipped:
-                    posY = self._engine.screen.get_height() - (self.position.y + self.size.y)
+                    posY = self._engine.screen.get_height() - (self.rect.top + self.rect.height)
 
                 for index in range(self._border_width):
                     glPushMatrix()
@@ -465,154 +417,113 @@ class TextInput(Renderable):
         for child in self._children:
             child.ask_render()
     
-    def set_border(self, color:ColorRGBA, width:int) -> None:
+    def set_border(self, color: ColorRGBA, width: int) -> None:
         '''
-        Set the border of this object
+        Set the border of this object.
         
         Parameters
         ----------
-        color : wame.color.rgb.ColorRGBA
-            The color to set the border to
+        color : ColorRGBA
+            The color to set the border to.
         width : int
-            The width of the border
+            The width of the border.
         '''
         
-        self._border_color = color if isinstance(color, ColorRGBA) else ColorRGBA.from_tuple(color)
+        self._border_color = color if isinstance(color, ColorRGBA) else ColorRGBA.from_iterable(color)
         self._border_width = width
 
-    def set_callback(self, func:Callable[[None], None]) -> None:
+    def set_callback(self, func: Callable[[None], None]) -> None:
         '''
-        Set the callback method for when this input is edited/activated/deactivated
+        Set the callback method for when this input is edited/activated/deactivated.
         
         Parameters
         ----------
         func : typing.Callable[[None], None]
-            The callback method to call
+            The callback method to call.
         '''
 
         self._callback = func
 
-    def set_color(self, color:ColorRGBA) -> None:
+    def set_color(self, color: ColorRGBA) -> None:
         '''
-        Set the color of this object
+        Set the color of this object.
         
         Parameters
         ----------
-        color : wame.color.rgb.ColorRGBA
-            The color of this object
+        color : ColorRGBA
+            The color of this object.
         '''
         
-        self._color = color if isinstance(color, ColorRGBA) else ColorRGBA.from_tuple(color)
+        self._color = color if isinstance(color, ColorRGBA) else ColorRGBA.from_iterable(color)
 
-    def set_pixel_position(self, position:IntVector2) -> None:
+    def set_pixel_transform(self, position: IntVector2, size: IntVector2) -> None:
         '''
-        Set the exact pixel position of this object
+        Set the exact pixel transform (position, size) of this object.
         
         Parameters
         ----------
-        position : wame.vector.xy.IntVector2
-            The exact position of this object from the top-left point
+        position : IntVector2
+            The exact position of this object from the top-left point.
+        size : IntVector2
+            The exact size of this object.
         '''
 
         position = position if isinstance(position, IntVector2) else IntVector2.from_iterable(position)
+        position.x += self._parent.rect.left
+        position.y += self._parent.rect.top
 
-        if self._parent:
-            position.x += self._parent.position.x
-            position.y += self._parent.position.y
-        
-        self.position = position
+        size = size if isinstance(size, IntVector2) else IntVector2.from_iterable(size)
 
-        if self.size:
-            self.text.set_pixel_position((
-                10, (self.size.y // 2) - (self.text.rect.height // 2)
-            ))
-
-    def set_pixel_size(self, size:IntVector2) -> None:
+        self.rect = pygame.Rect(*position, *size)
+        self.text.set_pixel_position((
+            10, (self.rect.height // 2) - (self.text.rect.height // 2)
+        ))
+    
+    def set_predicate(self, func: Callable[[int, int], bool]) -> None:
         '''
-        Set the exact pixel size of this object
+        Set the predicate for all keys typed in this input. This should return `True` if the keys typed should be entered, `False` otherwise.
         
         Parameters
         ----------
-        size : wame.vector.xy.IntVector2
-            The exact size of this object
+        func : typing.Callable[[int, int], bool]
+            The predicate function - Takes the `key` and `mods` parameters provided by `pygame`.
         '''
-        
-        self.size = size if isinstance(size, IntVector2) else IntVector2.from_iterable(size)
 
-        if self.position:
-            self.text.set_pixel_position((
-                10, (self.size.y // 2) - (self.text.text.get_height() // 2)
-            ))
+        self._predicate = func
 
-    def set_scaled_position(self, position:FloatVector2) -> None:
+    def set_scaled_transform(self, position: FloatVector2, size: FloatVector2) -> None:
         '''
-        Set the scaled position of this object
+        Set the scaled transform (position, size) of this object.
         
         Parameters
         ----------
-        position : wame.vector.xy.FloatVector2
-            The scaled position of this object from the top-left point
-        
-        Raises
-        ------
-        ValueError
-            If the provided positional values exceed `0`-`1`
+        position : FloatVector2
+            The scaled position of this object from the top-left point.
+        size : FloatVector2
+            The scaled size of this object.
         '''
 
         position = position if isinstance(position, FloatVector2) else FloatVector2.from_iterable(position)
-
-        if position.x > 1 or position.x < 0 or position.y > 1 or position.y < 0:
-            error:str = "Scaled position X, Y values must be between 0 and 1"
-            raise ValueError(error)
-        
-        newPosition:IntVector2 = IntVector2(0, 0)
-
-        if not self._parent:
-            newPosition.x = int(self._engine.screen.get_width() * position.x)
-            newPosition.y = int(self._engine.screen.get_height() * position.y)
-        else:
-            newPosition.x = int(self._parent.position.x + (self._parent.size.x * position.x))
-            newPosition.y = int(self._parent.position.y + (self._parent.size.y * position.y))
-
-        self.position = newPosition
-
-        if self.size:
-            self.text.set_pixel_position((
-                10, (self.size.y // 2) - (self.text.rect.height // 2)
-            ))
-    
-    def set_scaled_size(self, size:IntVector2) -> None:
-        '''
-        Set the scaled size of this object
-        
-        Parameters
-        ----------
-        size : wame.vector.xy.IntVector2
-            The scaled size of this object
-        
-        Raises
-        ------
-        ValueError
-            If the provided size values exceed `0`-`1`
-        '''
-
         size = size if isinstance(size, FloatVector2) else FloatVector2.from_iterable(size)
 
-        if size.x > 1 or size.x < 0 or size.y > 1 or size.y < 0:
-            error:str = "Scaled size X, Y values must be between 0 and 1"
+        if position.x < 0 or position.x > 1 or position.y < 0 or position.y > 1:
+            error: str = "Scaled position X, Y values must be between 0 and 1."
             raise ValueError(error)
-    
-        newSize:IntVector2 = IntVector2(0, 0)
+        
+        if size.x < 0 or size.x > 1 or size.y < 0 or size.y > 1:
+            error: str = "Scaled size X, Y values must be between 0 and 1."
+            raise ValueError(error)
+        
+        position = IntVector2(
+            int(self._parent.rect.left + (self._parent.rect.width * position.x)),
+            int(self._parent.rect.top + (self._parent.rect.height * position.y))
+        )
+        size = IntVector2(
+            int(self._parent.rect.width * size.x),
+            int(self._parent.rect.height * size.y)
+        )
 
-        if not self._parent:
-            newSize.x = int(self._engine.screen.get_width() * size.x)
-            newSize.y = int(self._engine.screen.get_height() * size.y)
-        else:
-            newSize.x = int(self._parent.size.x * size.x)
-            newSize.y = int(self._parent.size.y * size.y)
-
-        self.size = newSize
-
+        self.rect = pygame.Rect(*position, *size)
         self.text.set_pixel_position((
-                10, (self.size.y // 2) - (self.text.rect.height // 2)
-            ))
+            10, (self.rect.height // 2) - (self.text.rect.height // 2)
+        ))

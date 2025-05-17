@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "wame-engine"
-version = "0.6.0"
+version = "0.7.0"
 description = "Wame Game Engine"
 readme = "README.md"
 requires-python = ">=3.7"
@@ -20,7 +20,7 @@ classifiers = [
     "Topic :: Games/Entertainment",
     "Topic :: Software Development :: Libraries :: pygame"
 ]
-keywords = ["python", "pygame", "wrapper", "engine", "game", "opengl", "2D", "3D", "networking"]
+keywords = ["python", "pygame", "wrapper", "engine", "game", "opengl", "2D", "3D"]
 dependencies = ["pygame", "pyopengl", "numpy"]
 
 [project.urls]

@@ -3,6 +3,7 @@ The `wame` `Engine` automatically creates settings that the `Engine` will utiliz
 
 ## Settings System
 Defined in `wame.settings`:
+
 - `Settings` is an internal object utilized by the `Engine` that allows for the persistent saving of client settings between game sessions.
 
 ## Example Programs

@@ -10,23 +10,26 @@ from OpenGL.GL import *
 import pygame
 import wame
 
-# TODO: Border Radius
-
 class Frame(Renderable):
-    '''UI Container'''
+    '''UI Container.'''
 
-    def __init__(self, parent:'Frame', *, color:ColorRGBA=None, y_flipped:bool=False) -> None:
+    __slots__ = (
+        "_parent", "_children", "_color", "_border_color", "_border_width",
+        "_flipped",
+    )
+
+    def __init__(self, parent: 'Frame', *, color: ColorRGBA=None, y_flipped: bool=False) -> None:
         '''
-        Create a UI frame
+        Create a UI frame.
         
         Parameters
         ----------
-        parent : wame.ui.frame.Frame
-            The parent of this frame
-        color : wame.color.rgb.ColorRGBA
-            The background color of the frame
+        parent : Frame
+            The parent of this frame.
+        color : ColorRGBA
+            The background color of the frame.
         y_flipped : bool
-            If it should be rendered with the Y-axis flipped - May be necessary depending on your OpenGL setup
+            If it should be rendered with the Y-axis flipped - May be necessary depending on your OpenGL setup.
         
         Note
         ----
@@ -48,7 +51,7 @@ class Frame(Renderable):
 
         self._children:list[Renderable] = []
 
-        self._color:ColorRGBA = (color if isinstance(color, ColorRGBA) else ColorRGBA.from_tuple(color)) if color else None
+        self._color:ColorRGBA = (color if isinstance(color, ColorRGBA) else ColorRGBA.from_iterable(color)) if color else None
 
         self._border_color:ColorRGBA = None
         self._border_width:int = None
@@ -57,10 +60,10 @@ class Frame(Renderable):
 
     def render(self) -> None:
         '''
-        Render this frame and it's children to the screen
+        Render this frame and it's children to the screen.
         '''
 
-        if not self.position or not self.size:
+        if not self.rect:
             error:str = "The frame must have its size and position set before rendering"
             raise ValueError(error)
     
@@ -70,9 +73,9 @@ class Frame(Renderable):
                     self._engine.screen, self._color.to_tuple(), self.rect
                 )
             elif self._engine._pipeline == wame.Pipeline.OPENGL:
-                posY:int = self._engine.screen.get_height() - (self.position.y + self.size.y)
-                posWidth:int = self.position.x + self.size.x
-                posHeight:int = self.position.y + self.size.y
+                posY:int = self._engine.screen.get_height() - (self.rect.top + self.rect.height)
+                posWidth:int = self.rect.left + self.rect.width
+                posHeight:int = self.rect.top + self.rect.height
 
                 glMatrixMode(GL_PROJECTION)
                 glLoadIdentity()
@@ -86,19 +89,19 @@ class Frame(Renderable):
                 glDisable(GL_LIGHTING)
                 glDisable(GL_TEXTURE_2D)
 
-                glColor4f(self._color.r / 255, self._color.g / 255, self._color.b / 255, self._color.a)
+                glColor4f(*self._color.normalized())
 
                 glBegin(GL_QUADS)
                 if self._flipped:
-                    glVertex2f(self.position.x, posHeight)
+                    glVertex2f(self.rect.left, posHeight)
                     glVertex2f(posWidth, posHeight)
                     glVertex2f(posWidth, posY)
-                    glVertex2f(self.position.x, posY)
+                    glVertex2f(self.rect.left, posY)
                 else:
-                    glVertex2f(self.position.x, posY)
+                    glVertex2f(self.rect.left, posY)
                     glVertex2f(posWidth, posY)
                     glVertex2f(posWidth, posHeight)
-                    glVertex2f(self.position.x, posHeight)
+                    glVertex2f(self.rect.left, posHeight)
                 glEnd()
 
                 glPopMatrix()
@@ -109,8 +112,8 @@ class Frame(Renderable):
             if self._engine._pipeline == wame.Pipeline.PYGAME:
                 for index in range(self._border_width):
                     pygame.draw.lines(self._engine.screen, self._border_color.to_tuple(), True, [
-                        (self.position.x + index, self.position.y + index), (self.position.x + self.size.x - index, self.position.y + index),
-                        (self.position.x + self.size.x - index, self.position.y + self.size.y - index), (self.position.x + index, self.position.y + self.size.y - index)
+                        (self.rect.left + index, self.rect.top + index), (self.rect.left + self.rect.width - index, self.rect.top + index),
+                        (self.rect.left + self.rect.width - index, self.rect.top + self.rect.height - index), (self.rect.left + index, self.rect.top + self.rect.height - index)
                     ])
             elif self._engine._pipeline == wame.Pipeline.OPENGL:
                 ...
@@ -118,123 +121,92 @@ class Frame(Renderable):
         for child in self._children:
             child.ask_render()
     
-    def set_border(self, color:ColorRGBA, width:int) -> None:
+    def set_border(self, color: ColorRGBA, width: int) -> None:
         '''
-        Set the border of this object
+        Set the border of this object.
         
         Parameters
         ----------
-        color : wame.color.rgb.ColorRGBA
-            The color to set the border to
+        color : ColorRGBA
+            The color to set the border to.
         width : int
-            The width of the border
+            The width of the border.
         '''
 
-        self._border_color = color if isinstance(color, ColorRGBA) else ColorRGBA.from_tuple(color)
+        self._border_color = color if isinstance(color, ColorRGBA) else ColorRGBA.from_iterable(color)
         self._border_width = width
 
-    def set_color(self, color:ColorRGBA) -> None:
+    def set_color(self, color: ColorRGBA) -> None:
         '''
-        Set the color of this object
+        Set the color of this object.
         
         Parameters
         ----------
-        color : wame.color.rgb.ColorRGBA
-            The color of this object
+        color : ColorRGBA
+            The color of this object.
         '''
 
-        self._color = color if isinstance(color, ColorRGBA) else ColorRGBA.from_tuple(color)
+        self._color = color if isinstance(color, ColorRGBA) else ColorRGBA.from_iterable(color)
 
-    def set_pixel_position(self, position:IntVector2) -> None:
+    def set_pixel_transform(self, position: IntVector2, size: IntVector2) -> None:
         '''
-        Set the exact pixel position of this object
+        Set the exact pixel transform (position, size) of this object.
         
         Parameters
         ----------
-        position : wame.vector.xy.IntVector2
-            The exact position to place the top-left of this object
+        position : IntVector2
+            The exact position of this object from the top-left point.
+        size : IntVector2
+            The exact size of this object.
         '''
 
         position = position if isinstance(position, IntVector2) else IntVector2.from_iterable(position)
 
         if self._parent:
-            position.x += self._parent.position.x
-            position.y += self._parent.position.y
-        
-        self.position = position
+            position.x += self._parent.rect.left
+            position.y += self._parent.rect.top
 
-    def set_pixel_size(self, size:IntVector2) -> None:
+        size = size if isinstance(size, IntVector2) else IntVector2.from_iterable(size)
+
+        self.rect = pygame.Rect(*position, *size)
+
+    def set_scaled_transform(self, position: FloatVector2, size: FloatVector2) -> None:
         '''
-        Set the exact pixel size of this object
+        Set the scaled transform (position, size) of this object.
         
         Parameters
         ----------
-        size : wame.vector.xy.IntVector2
-            The exact size of this object
-        '''
-
-        self.size = size if isinstance(size, IntVector2) else IntVector2.from_iterable(size)
-
-    def set_scaled_position(self, position:FloatVector2) -> None:
-        '''
-        Set the scaled position of this object
-        
-        Parameters
-        ----------
-        position : wame.vector.xy.FloatVector2
-            The scaled position of this object from the top-left point
-        
-        Raises
-        ------
-        ValueError
-            If the provided positional values exceed `0`-`1`
+        position : FloatVector2
+            The scaled position of this object from the top-left point.
+        size : FloatVector2
+            The scaled size of this object.
         '''
 
         position = position if isinstance(position, FloatVector2) else FloatVector2.from_iterable(position)
-
-        if position.x > 1 or position.x < 0 or position.y > 1 or position.y < 0:
-            error:str = "Scaled position X, Y values must be between 0 and 1"
-            raise ValueError(error)
-        
-        newPosition:IntVector2 = IntVector2(0, 0)
-
-        if not self._parent:
-            newPosition.x = int(self._engine.screen.get_width() * position.x)
-            newPosition.y = int(self._engine.screen.get_height() * position.y)
-        else:
-            newPosition.x = int(self._parent.position.x + (self._parent.size.x * position.x))
-            newPosition.y = int(self._parent.position.y + (self._parent.size.y * position.y))
-
-        self.position = newPosition
-    
-    def set_scaled_size(self, size:IntVector2) -> None:
-        '''
-        Set the exact pixel size of this object
-        
-        Parameters
-        ----------
-        size : wame.vector.xy.IntVector2
-            The exact size of this object
-        
-        Raises
-        ------
-        ValueError
-            If the provided size values exceed `0`-`1`
-        '''
-        
         size = size if isinstance(size, FloatVector2) else FloatVector2.from_iterable(size)
 
-        if size.x > 1 or size.x < 0 or size.y > 1 or size.y < 0:
-            error:str = "Scaled size X, Y values must be between 0 and 1"
+        if position.x < 0 or position.x > 1 or position.y < 0 or position.y > 1:
+            error: str = "Scaled position X, Y values must be between 0 and 1."
             raise ValueError(error)
-    
-        newSize:IntVector2 = IntVector2(0, 0)
+        
+        if size.x < 0 or size.x > 1 or size.y < 0 or size.y > 1:
+            error: str = "Scaled size X, Y values must be between 0 and 1."
+            raise ValueError(error)
+        
+        new_position: IntVector2 = IntVector2(0, 0)
+        new_size: IntVector2 = IntVector2(0, 0)
 
-        if not self._parent:
-            newSize.x = int(self._engine.screen.get_width() * size.x)
-            newSize.y = int(self._engine.screen.get_height() * size.y)
+        if self._parent:
+            new_position.x = int(self._parent.rect.left + (self._parent.rect.width * position.x))
+            new_position.y = int(self._parent.rect.top + (self._parent.rect.height * position.y))
+
+            new_size.x = int(self._parent.rect.width * size.x)
+            new_size.y = int(self._parent.rect.height * size.y)
         else:
-            newSize.x = int(self._parent.size.x * size.x)
-            newSize.y = int(self._parent.size.y * size.y)
+            new_position.x = int(self._engine.screen.get_width() * position.x)
+            new_position.y = int(self._engine.screen.get_height() * position.y)
 
-        self.size = newSize
+            new_size.x = int(self._engine.screen.get_width() * size.x)
+            new_size.y = int(self._engine.screen.get_height() * size.y)
+
+        self.rect = pygame.Rect(*new_position, *new_size)

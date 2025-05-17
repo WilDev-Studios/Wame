@@ -1,17 +1,21 @@
 # Vectors
 Game engines usually include 2D/3D vector array objects that developers can interact with. `Wame` is no different.
+
 - Vectors are created to simplify access and math that is usually associated with XY, XYZ, etc. coordinates.
 - All of these vector objects are able to add and subtract from each other, even with regular `tuple` objects or `numpy` arrays of the same dimension. Vectors are natively hashable and can be compared to one another.
 
-As vectors sit right now, these objects are mostly unnecessary for developers to use, as they are provided by the engine internally. If you wish to use vectors with optimized arithmetic, consider using commonly used modules supported by `3D` libraries like `OpenGL`.
+!!! warning
+    Please note that even though vectors are `hashable`, they are still `mutable`. This can cause issues if not handled properly.
 
 ## 2D Vectors
 Defined in the `wame.vector.xy` program:
+
 - `FloatVector2`: Stores `x` and `y` internally, but can be `int` or `float`. This is generally recommended for 2D game scenes, not UI (as it's pixel/integer based).
 - `IntVector2`: Similar to `FloatVector2` but can only be `int`. This is generally recommended for 2D game UIs.
 
 ## 3D Vectors
 Defined in the `wame.vector.xyz` program:
+
 - `FloatVector3`: Stores `x`, `y`, and `z` internally, but can be `int` or `float`. This is generally recommended for 3D game scenes; the `Z` parameter is useless in UI-contexts.
 - `IntVector3`: Similar to `FloatVector3` but can only be `int`.
 

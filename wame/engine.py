@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from typing import Union
-from wame.color.rgb import ColorRGB, ColorRGBA
+from wame.color.rgb import ColorRGB
 from wame.vector import IntVector2
 from wame.interval import Interval
 from wame.settings import Settings
@@ -22,9 +21,18 @@ pygame.joystick.init()
 class Engine:
     '''Game Engine'''
     
+    __slots__ = (
+        "_name", "_screen", "_delta_time", "_running",
+        "_last_frame_time", "_raw_fps", "settings", "_settings_persistent",
+        "_scene", "_scenes", "_set_fps", "_background_color", "_size",
+        "_mouse_visibility", "_mouse_grabbed", "_pipeline", "_display",
+        "_fixed_update_interval", "_fixed_update_accumulator", "_fixed_update_last",
+        "_game_loop_enabled", "_poll_game_loop"
+    )
+
     _previously_instantiated:bool = False
 
-    def __init__(self, name:str, pipeline:Pipeline, *, size:IntVector2=IntVector2(0, 0), display:int=0, icon:pygame.Surface=None, settings_persistent:bool=True) -> None:
+    def __init__(self, name: str, pipeline: Pipeline, *, size: IntVector2=IntVector2(0, 0), display: int=0, icon: pygame.Surface=None, settings_persistent: bool=True) -> None:
         '''
         Instantiates a game engine that handles all backend code for running games.
         
@@ -32,9 +40,9 @@ class Engine:
         ----------
         name : str
             The name of the engine window.
-        pipeline : wame.pipeline.Pipeline
+        pipeline : Pipeline
             The pipeline library the engine should use.
-        size : wame.vector.xy.IntVector2
+        size : IntVector2
             The X and Y sizes for the game window.
         display : int
             The index of the display/monitor for the rendering screen.
@@ -57,11 +65,12 @@ class Engine:
         Engine._previously_instantiated = True
 
         self._name:str = name
-
         self._screen:pygame.Surface = None
-        self._clock:pygame.time.Clock = pygame.time.Clock()
-        self._deltaTime:float = 0.001
+        self._delta_time:float = 0.001
         self._running:bool = False
+
+        self._last_frame_time: float = time.perf_counter()
+        self._raw_fps: float = 0.0
 
         if settings_persistent:
             if not os.path.exists("settings.json"):
@@ -82,7 +91,7 @@ class Engine:
         self._scenes:dict[str, Scene] = {}
 
         self._set_fps:int = self.settings.max_fps
-        self._background_color:ColorRGBA = ColorRGBA(0, 0, 0, 1.0)
+        self._background_color:ColorRGB = ColorRGB(0, 0, 0)
 
         self._size:IntVector2 = size
 
@@ -126,6 +135,12 @@ class Engine:
         self._running = True
 
         while self._running:
+            current_time: float = time.perf_counter()
+
+            self._delta_time = current_time - self._last_frame_time
+            self._raw_fps = 1.0 / self._delta_time if self._delta_time > 0 else float("inf")
+            self._last_frame_time = current_time
+
             if self._game_loop_enabled:
                 self._scene._check_events()
                 self._scene._check_keys()
@@ -158,7 +173,7 @@ class Engine:
         self._cleanup()
 
     @property
-    def background_color(self) -> ColorRGBA:
+    def background_color(self) -> ColorRGB:
         '''The background/screen color of the engine.'''
 
         return self._background_color
@@ -167,13 +182,13 @@ class Engine:
     def delta_time(self) -> float:
         '''Time since the last frame was rendered.'''
 
-        return self._deltaTime
+        return self._delta_time
 
     @property
     def fps(self) -> float:
         '''Frames per second of the engine.'''
 
-        return self._clock.get_fps()
+        return self._raw_fps
 
     @property
     def mouse_locked(self) -> bool:
@@ -200,7 +215,7 @@ class Engine:
         
         self._running = False
 
-    def register_scene(self, name:str, scene:Scene, overwrite:bool=False) -> None:
+    def register_scene(self, name: str, scene: Scene, overwrite: bool=False) -> None:
         '''
         Register a scene to the engine.
         
@@ -208,7 +223,7 @@ class Engine:
         ----------
         name : str
             The unique name used to lookup and manipulate this scene.
-        scene : wame.scene.Scene
+        scene : Scene
             The scene to register.
         overwrite : bool
             If the unique name is already used, overwrite it, else throw an error.
@@ -236,13 +251,13 @@ class Engine:
 
         self._scenes[name] = scene
 
-    def register_scenes(self, scenes:dict[str, Scene], overwrite:bool=False) -> None:
+    def register_scenes(self, scenes: dict[str, Scene], overwrite: bool=False) -> None:
         '''
         Register a set of scenes to the engine.
         
         Parameters
         ----------
-        scenes : dict[str, wame.scene.Scene]
+        scenes : dict[str, Scene]
             The name-scene pairs to register.
         overwrite : bool
             If any unique name is already used, overwrite it, else throw an error.
@@ -267,7 +282,7 @@ class Engine:
         for name, scene in scenes.items():
             self.register_scene(name, scene, overwrite)
     
-    def register_scenes_from_folder(self, folder:str, overwrite:bool=False) -> None:
+    def register_scenes_from_folder(self, folder: str, overwrite: bool=False) -> None:
         '''
         Register all Scene objects within all files in a folder to the engine.
         
@@ -377,19 +392,19 @@ class Engine:
 
         return self._screen
 
-    def set_background(self, color:ColorRGBA=ColorRGBA(0, 0, 0, 1.0)) -> None:
+    def set_background(self, color: ColorRGB) -> None:
         '''
-        Set the background color of the engine rendering scene
+        Set the background color of the engine rendering scene.
         
         Parameters
         ----------
-        color : wame.color.rgb.ColorRGBA
+        color : ColorRGB
             The background color to apply to all scenes.
         
         Raises
         ------
         TypeError
-            If the provided color is not an RGB/A-supported type (like `tuple` or `ColorRGB/A`).
+            If the provided color is not an RGB-supported type (like `tuple` or `ColorRGB`).
         '''
 
         if not isinstance(color, (ColorRGB, tuple)):
@@ -397,7 +412,7 @@ class Engine:
             raise TypeError(error)
 
         if isinstance(color, tuple):
-            color = ColorRGBA.from_tuple(color)
+            color = ColorRGB.from_iterable(color)
 
         self._background_color = color
  
@@ -426,7 +441,7 @@ class Engine:
 
         self._game_loop_enabled = enabled
 
-    def set_mouse_visible(self, state:bool=True) -> None:
+    def set_mouse_visible(self, state: bool=True) -> None:
         '''
         Set if the mouse should be visible or hidden.
         
@@ -448,7 +463,7 @@ class Engine:
         self._mouse_visibility = state
         pygame.mouse.set_visible(state)
 
-    def set_mouse_locked(self, state:bool=False) -> None:
+    def set_mouse_locked(self, state: bool=False) -> None:
         '''
         Set if the mouse should be immovable.
         
@@ -470,13 +485,13 @@ class Engine:
         self._mouse_grabbed = state
         pygame.event.set_grab(state)
 
-    def set_pipeline(self, pipeline:Pipeline) -> None:
+    def set_pipeline(self, pipeline: Pipeline) -> None:
         '''
         Set the rendering pipeline that the engine should use.
         
         Parameters
         ----------
-        pipeline : wame.Pipeline
+        pipeline : Pipeline
             The rendering pipeline to switch to.
         
         Raises
@@ -502,7 +517,7 @@ class Engine:
         else:
             self._screen = pygame.display.set_mode(self._size.to_tuple(), pygame.HWSURFACE | pygame.DOUBLEBUF | pygame.OPENGL, display=self._display, vsync=self.settings.vsync)
 
-    def set_scene(self, name: str, *args) -> None:
+    def set_scene(self, name: str, *args, **kwargs) -> None:
         '''
         Switch the engine to another scene and clean up the previous (if any).
         
@@ -511,6 +526,8 @@ class Engine:
         name : str
             The unique name of the scene to switch to (must be previously registered).
         args : Any
+            Any data you wish to pass to the scene instance.
+        kwargs : dict[str, Any]
             Any data you wish to pass to the scene instance.
         
         Raises
@@ -538,19 +555,19 @@ class Engine:
             self.scene._cleanup()
             del self.scene
 
-        self._scene = self._scenes[name](self, *args)
+        self._scene = self._scenes[name](self, *args, **kwargs)
         self._scene._first()
 
         self._fixed_update_accumulator = 0.0
         self._fixed_update_last = time.perf_counter()
 
-    def set_update_interval(self, interval:Union[Interval, float]) -> None:
+    def set_update_interval(self, interval: Interval) -> None:
         '''
         Set the amount of time (in seconds) that has to elapse before a fixed update call to a `Scene` is called.
         
         Parameters
         ----------
-        interval : Interval | float
+        interval : Interval
             The amount of seconds to elapse for each fixed update call.
         
         Raises
@@ -558,18 +575,18 @@ class Engine:
         RuntimeError
             If trying to switch interval timing during the game loop.
         TypeError
-            If the interval provided is not an `Interval` or `float`.
+            If the interval provided is not an `Interval`, `float`, or `int`.
         '''
 
-        if not isinstance(interval, (Interval, float)):
-            error: str = "Parameter `interval` must be an `Interval` object or `float`."
+        if not isinstance(interval, (Interval, float, int)):
+            error: str = "Parameter `interval` must be an `Interval` object, `float`, or `int`."
             raise TypeError(error)
 
         if self.scene and self.scene._first_elapsed:
             error:str = "Switching update intervals during the game loop is not supported"
             raise RuntimeError(error)
 
-        self._fixed_update_interval = interval.value
+        self._fixed_update_interval = interval.value if isinstance(interval, Interval) else interval
 
     def start(self) -> None:
         '''

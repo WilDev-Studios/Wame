@@ -1,31 +1,62 @@
 # Colors
-Easy access to different colors and functionality for them is frequently necessary for developing games. `Wame` has you covered here.
+## Overview
+This module defines two primary classes for representing and manipulating colors in RGB and RGBA formats:
 
-## RGB Objects
-Defined in `wame.color.rgb`, the two `RGB` objects are:
-- `ColorRGB`: Contains internal `r`, `g`, and `b` fields (`RED`, `GREEN`, `BLUE`). This makes color organization simple, and the `Engine` understands these.
-- `ColorRGBA`: Similar to `ColorRGB`, but has an additional `a` (`ALPHA`/`TRANSPARENCY`) field.
+- `ColorRGB`: A basic color representation using `red`, `green`, and `blue` channels.
+- `ColorRGB`: An extended color representation that includes an `alpha` (transparency) channel.
 
-`~ColorRGB` objects also contain internal `nr`, `ng`, and `nb` fields, which are normalized `RGB` values. These are necessary for objects that take normalized (`0-1`) `RGB` values rather than regular `RGB` values (`0-255`). `OpenGL` commonly uses normalized fields.
+Both classes offer built-in type safety, format conversion, normalization, and conventient interoperability with Python data structures and `NumPy`.
 
-These objects aren't usually necessary for the developer to use, as it's provided internally by the `Engine`. The `Engine` also supports raw `tuple` values in contexts where `RGB` values are required.
+!!! success "Compatibility"
+    - Fully compatible with `NumPy` arrays and Python `tuple`/`list` types for input/output.
+    - Intended for use in both scripting and performance-sensitive applications.
 
-## Values
-Defined in `wame.color.values`:
-- `RGB`: Contains commonly predefined `ColorRGB` objects, like `Black` (RGB: `0`, `0`, `0`), `White` (`255`, `255`, `255`), etc.
+## `ColorRGB`
+Represents a color defined by red, green, and blue components (`0`-`255` each). Provides various utilities for converting and interacting with color values.
 
-## Example Programs
+### Features
+- Type-safe construction with automatic validation of RGB values.
+- Normalization support via `.nr`, `.ng`, and `.nb` properties for values between `0`-`1`.
+- Interoperable access using indexing (`[0]` for red, `[1]` for green, and `[2]` for blue), iteration, and tuple unpacking.
+- Color format conversion:
+    - `hex()`: RGB to hexadecimal string (`#000000`).
+    - `hsl()`: RGB to HSL tuple.
+    - `hsv()`: RGB to HSV tuple.
+    - `int()`: RGB to packed 24-bit integer.
+- Mutability through both item-style (`color[0] = 100`) and attribute-style (`color.r = 100`) assignment.
+- Representation utilities:
+    - `__str__`, `__repr__` support.
+    - Custom `__format__` strings: `"hex"`, `"hsl"`, `"hsv"`, `"int"`, and `"tuple"`.
+
+### Examples
 ```python
-# Setting the background color of the `Engine`
-color: ColorRGB = ColorRGB(0, 255, 255) # Cyan
-
-engine: Engine = wame.Engine(...)
-engine.set_background(color) # Takes a `ColorRGBA` object, but supports `ColorRGB` (converted natively)
-
-print(color)
-print(color.r, color.nb)
+color = ColorRGB(255, 100, 50)
+print(color.hex())              # "#FF6432"
+print(color.hsv())              # (0.04..., 0.80..., 1.0)
+r, g, b = color                 # Unpacks to RGB values
 ```
-```
->>> R: 0, G: 255, B: 255
->>> 0, 1
+
+## `ColorRGBA`
+Represents a color defined by red, green, and blue components (`0`-`255` each) and an alpha field (`0`-`1`). Provides various utilities for converting and interacting with color values.
+
+### Features
+- Type-safe construction with automatic validation of RGBA values.
+- Normalization support via `.nr`, `.ng`, and `.nb` properties for values between `0`-`1`.
+- Interoperable access using indexing (`[0]` for red, `[1]` for green, `[2]` for blue, and `[3]` for alpha), iteration, and tuple unpacking.
+- Color format conversion:
+    - `hex()`: RGB to hexadecimal string (`#000000`).
+    - `hsla()`: RGB to HSLA tuple.
+    - `hsva()`: RGB to HSVA tuple.
+    - `int()`: RGB to packed 32-bit integer.
+- Mutability through both item-style (`color[0] = 100`) and attribute-style (`color.r = 100`) assignment.
+- Representation utilities:
+    - `__str__`, `__repr__` support.
+    - Custom `__format__` strings: `"hex"`, `"hsla"`, `"hsva"`, `"int"`, and `"tuple"`.
+
+### Examples
+```python
+color = ColorRGBA(255, 100, 50, 0.5)
+print(color.hex())              # "#FF643280"
+print(color.hsva())              # (0.04..., 0.80..., 1.0, 0.5)
+r, g, b, a = color                 # Unpacks to RGBA values
 ```

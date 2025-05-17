@@ -3,6 +3,7 @@ Provides easy-to-use user-interface elements that are commonly used in games. `W
 
 ## Renderable
 Defined in `wame.ui.renderable`:
+
 - A `Renderable` is any object that subclasses the `Renderable` object.
 - Each subclass of `Renderable` should have their own transform data (position, and most have size) as well as color attributes.
 - These are always rendered under another `Renderable` (their "parent") that is first rendered by the `Scene`.
@@ -14,6 +15,7 @@ Defined in `wame.ui.renderable`:
 
 ## Frame
 Defined in `wame.ui.frame`:
+
 - A subclass of `Renderable`, the `Frame` is only a rectangular container that is primarily the "parent" of other objects.
 - All `Scene`s come with a native `Frame`, enabled by default, under `Scene.frame`.
 - These have their own color (can be completely transparent), position, and size attributes.
@@ -22,33 +24,36 @@ Defined in `wame.ui.frame`:
 
 ## Button
 Defined in `wame.ui.button`:
+
 - A subclass of `Renderable`, the `Button` is identical to `Frame` but can have text and hover/click functionality/callbacks.
 - Refer to the `Button` object itself for this functionality.
 
 ## Image
 Defined in `wame.ui.image`:
+
 - A subclass of `Renderable`, the `Image` is any pygame image loaded into this object.
 
 ## CheckboxInput
 Defined in `wame.ui.input`:
+
 - A subclass of `Renderable`, the `CheckboxInput` is basically a checkbox that has a position and size, and can be toggled `TRUE`/`FALSE`.
 
 ## TextInput
 Defined in `wame.ui.input`:
+
 - A subclass of `Renderable`, the `TextInput` is an input that becomes active when clicked in (as long as it's subscribed to in a `Scene`'s click listener).
 - All characters typed while active will be sent into a predicate method defined by the developer that will return `TRUE`/`FALSE` as to whether the key input should be accepted and thus entered into the input.
 
 ## Text
 Defined in `wame.ui.text`:
+
 - A subclass of `Renderable`, the `Text` is a renderable text/font. It only has position and font size data internally, so size cannot be changed unless font size is changed as well.
 
 ## Example Programs
 ```python
 # Disable the native `Scene` `Frame`
 class ExampleScene(Scene):
-    def __init__(self, engine: Engine) -> None:
-        super().__init__(engine)
-
+    def on_init(self, *args, **kwargs) -> None:
         self.frame.enabled = False
 
     def on_render(self) -> None:

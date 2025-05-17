@@ -10,20 +10,22 @@ from OpenGL.GL import *
 import pygame
 
 class Image(Renderable):
-    '''UI Image Object'''
+    '''UI Image Object.'''
 
-    def __init__(self, parent:Frame, image:pygame.Surface, y_flipped:bool=False) -> None:
+    __slots__ = ("_parent", "image", "_gl_texture_id", "_flipped",)
+
+    def __init__(self, parent: Frame, image: pygame.Surface, y_flipped: bool=False) -> None:
         """
-        Instantiate a new image
+        Instantiate a new image.
 
         Parameters
         ----------
-        parent : wame.ui.frame.Frame
-            The frame to set this child image's parent to
+        parent : Frame
+            The frame to set this child image's parent to.
         image : pygame.Surface
-            The image/surface to render
+            The image/surface to render.
         y_flipped : bool
-            Flips the position and orientation based on `OpenGL` context
+            Flips the position and orientation based on `OpenGL` context.
 
         Info
         ----
@@ -42,29 +44,27 @@ class Image(Renderable):
         self._render_image()
 
     def _render_image(self) -> None:
-        if self._engine._pipeline == Pipeline.OPENGL:
-            if self._gl_texture_id:
-                glDeleteTextures([self._gl_texture_id])
+        if self._engine._pipeline != Pipeline.OPENGL:
+            return
+        
+        if self._gl_texture_id:
+            glDeleteTextures([self._gl_texture_id])
 
-            textData = pygame.image.tostring(self.image, "RGBA", True)
-            width, height = self.image.get_size()
+        textData = pygame.image.tostring(self.image, "RGBA", True)
+        width, height = self.image.get_size()
 
-            self._gl_texture_id = glGenTextures(1)
-            glBindTexture(GL_TEXTURE_2D, self._gl_texture_id)
+        self._gl_texture_id = glGenTextures(1)
+        glBindTexture(GL_TEXTURE_2D, self._gl_texture_id)
 
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
 
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, textData)
-            glBindTexture(GL_TEXTURE_2D, 0)
-
-    @property
-    def rect(self) -> pygame.Rect:
-        return pygame.Rect(self.position.to_tuple(), self.image.get_size())
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, textData)
+        glBindTexture(GL_TEXTURE_2D, 0)
 
     def render(self) -> None:
         if self._engine._pipeline == Pipeline.PYGAME:
-            self._engine.screen.blit(self.image, self.position.to_tuple())
+            self._engine.screen.blit(self.image, self.rect.topleft)
         elif self._engine._pipeline == Pipeline.OPENGL:
             if not self._gl_texture_id:
                 return
@@ -72,11 +72,11 @@ class Image(Renderable):
             width:int = self.image.get_width()
             height:int = self.image.get_height()
 
-            posX:int = self.position.x
-            posY:int = self.position.y
+            posX:int = self.rect.left
+            posY:int = self.rect.top
 
             if not self._flipped:
-                posY = self._engine.screen.get_height() - (self.position.y + self.image.get_height())
+                posY = self._engine.screen.get_height() - (posY + self.image.get_height())
 
             glPushMatrix()
 
@@ -124,35 +124,35 @@ class Image(Renderable):
         for child in self._children:
             child.ask_render()
 
-    def set_pixel_position(self, position:IntVector2) -> None:
+    def set_pixel_position(self, position: IntVector2) -> None:
         '''
-        Set the exact pixel position of this object
+        Set the exact pixel position of this object.
         
         Parameters
         ----------
-        position : wame.vector.xy.IntVector2
-            The exact position of this object from the top-left point
+        position : IntVector2
+            The exact position of this object from the top-left point.
         '''
 
         position = position if isinstance(position, IntVector2) else IntVector2.from_iterable(position)
-        position.x += self._parent.position.x
-        position.y += self._parent.position.y
+        position.x += self._parent.rect.left
+        position.y += self._parent.rect.top
 
-        self.position = position
+        self.rect = pygame.Rect(position.to_tuple(), self.image.get_rect().size)
     
-    def set_scaled_position(self, position:FloatVector2) -> None:
+    def set_scaled_position(self, position: FloatVector2) -> None:
         '''
-        Set the scaled position of this object
+        Set the scaled position of this object.
         
         Parameters
         ----------
-        position : wame.vector.xy.FloatVector2
-            The scaled position of this object from the top-left point
+        position : FloatVector2
+            The scaled position of this object from the top-left point.
         
         Raises
         ------
         ValueError
-            If the provided positional values exceed `0`-`1`
+            If the provided positional values exceed `0`-`1`.
         '''
 
         position = position if isinstance(position, FloatVector2) else FloatVector2.from_iterable(position)
@@ -161,21 +161,24 @@ class Image(Renderable):
             error:str = "Scaled position X, Y values must be between 0 and 1"
             raise ValueError(error)
         
-        newPosition:IntVector2 = IntVector2(0, 0)
-        newPosition.x = int(self._parent.position.x + (self._parent.size.x * position.x))
-        newPosition.y = int(self._parent.position.y + (self._parent.size.y * position.y))
+        new_position:IntVector2 = IntVector2(
+            int(self._parent.rect.left + (self._parent.rect.width * position.x)),
+            int(self._parent.rect.top + (self._parent.rect.height * position.y))
+        )
 
-        self.position = newPosition
+        self.rect = pygame.Rect(new_position.to_tuple(), self.image.get_rect().size)
     
-    def set_image(self, image:pygame.Surface) -> None:
+    def set_image(self, image: pygame.Surface) -> None:
         '''
-        Set the image of this object
+        Set the image of this object.
         
         Parameters
         ----------
         image : pygame.Surface
-            The image/surface to set
+            The image/surface to set.
         '''
         
         self.image = image
+        self.rect = pygame.Rect(self.rect.topleft, image.get_rect().size)
+
         self._render_image()

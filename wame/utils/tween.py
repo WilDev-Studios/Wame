@@ -3,14 +3,18 @@ from typing import Callable, TYPE_CHECKING
 if TYPE_CHECKING:
     from wame.scene import Scene
 
+from dataclasses import dataclass
+from wame.color.rgb import ColorRGB, ColorRGBA
+
 import math
 import pygame
 
 class Easing:
     '''Animation Easing Functions.'''
-    
+
     @staticmethod
     def BOUNCE_IN(t: float) -> float:
+        '''Bounce Easing In.'''
         return 1 - Easing.BOUNCE_OUT(1 - t)
     
     @staticmethod
@@ -33,6 +37,7 @@ class Easing:
     
     @staticmethod
     def BOUNCE_IN_OUT(t: float) -> float:
+        '''Bounce Easing In/Out.'''
         return (1 - Easing.BOUNCE_OUT(1 - 2 * t)) / 2 if t < 0.5 else (1 + Easing.BOUNCE_OUT(2 * t - 1)) / 2
 
     @staticmethod
@@ -115,8 +120,37 @@ class Easing:
         '''Sine Easing In/Out.'''
         return -(math.cos(math.pi * t) - 1) / 2
 
+@dataclass(frozen=True, slots=True)
+class TweenRect:
+    start: pygame.Rect
+    end: pygame.Rect
+    target: pygame.Rect
+    duration: float
+    started_at: int
+    easing: Callable[[float], float]
+
+@dataclass(frozen=True, slots=True)
+class TweenRGB:
+    start: ColorRGB
+    end: ColorRGB
+    target: ColorRGB
+    duration: float
+    started_at: int
+    easing: Callable[[float], float]
+
+@dataclass(frozen=True, slots=True)
+class TweenRGBA:
+    start: ColorRGBA
+    end: ColorRGBA
+    target: ColorRGBA
+    duration: float
+    started_at: int
+    easing: Callable[[float], float]
+
 class Tween:
     '''Animate Objects Easily.'''
+
+    __slots__ = ("_scene", "_tween_rects", "_tween_rgbs", "_tween_rgbas",)
 
     def __init__(self, scene: 'Scene') -> None:
         '''
@@ -135,21 +169,46 @@ class Tween:
         self._scene: 'Scene' = scene
         self._scene._events_update.add(self._update)
 
-        # START, END, TARGET, DURATION, STARTED_AT, EASING_FUNC
-        self._tween_rects: list[tuple[pygame.Rect, pygame.Rect, pygame.Rect, float, int, Callable[[float], float]]] = []
+        self._tween_rects: list[TweenRect] = []
+        self._tween_rgbs:  list[TweenRGB] =  []
+        self._tween_rgbas: list[TweenRGBA] = []
 
-    def _apply_rect(self, tween_rect:tuple[pygame.Rect, pygame.Rect, pygame.Rect, float, int, Callable[[float], float]]) -> bool:
-        start, end, target, duration, started_at, easing_func = tween_rect
-        progress = self._calculate_progress(started_at, duration, easing_func)
+    def _apply_rect(self, tween_rect: TweenRect) -> bool:
+        progress = self._calculate_progress(tween_rect.started_at, tween_rect.duration, tween_rect.easing)
+        start, end, target = tween_rect.start, tween_rect.end, tween_rect.target
+        r: Callable[[float], int] = round
 
         target.topleft = (
-            round(start.x + (end.x - start.x) * progress),
-            round(start.y + (end.y - start.y) * progress)
+            r(start.x + (end.x - start.x) * progress),
+            r(start.y + (end.y - start.y) * progress)
         )
         target.size = (
-            round(start.width + (end.width - start.width) * progress),
-            round(start.height + (end.height - start.height) * progress)
+            r(start.width + (end.width - start.width) * progress),
+            r(start.height + (end.height - start.height) * progress)
         )
+
+        return progress >= 1.0
+    
+    def _apply_rgb(self, tween_rgb: TweenRGB) -> bool:
+        progress: float = self._calculate_progress(tween_rgb.started_at, tween_rgb.duration, tween_rgb.easing)
+        start, end, target = tween_rgb.start, tween_rgb.end, tween_rgb.target
+        r: Callable[[float], int] = round
+
+        target.r = r(start.r + (end.r - start.r) * progress)
+        target.g = r(start.g + (end.g - start.g) * progress)
+        target.b = r(start.b + (end.b - start.b) * progress)
+
+        return progress >= 1.0
+
+    def _apply_rgba(self, tween_rgba: TweenRGBA) -> bool:
+        progress: float = self._calculate_progress(tween_rgba.started_at, tween_rgba.duration, tween_rgba.easing)
+        start, end, target = tween_rgba.start, tween_rgba.end, tween_rgba.target
+        r: Callable[[float], int] = round
+
+        target.r = r(start.r + (end.r - start.r) * progress)
+        target.g = r(start.g + (end.g - start.g) * progress)
+        target.b = r(start.b + (end.b - start.b) * progress)
+        target.a = tween_rgba.start.a + (tween_rgba.end.a - tween_rgba.start.a) * progress
 
         return progress >= 1.0
 
@@ -158,50 +217,149 @@ class Tween:
         current_time: int = pygame.time.get_ticks()
         elapsed: float = (current_time - started_at) / 1000.0
         
-        return easing_func(min(elapsed / duration, 1.0))
+        return min(1.0, max(0.0, easing_func(min(elapsed / duration, 1.0))))
 
     def _update(self) -> None:
-        finished: list = []
-        new_tween_rects: list[pygame.Rect, pygame.Rect, pygame.Rect, float, int, Callable[[float], float]] = []
+        rects, rgbs, rgbas = self._tween_rects, self._tween_rgbs, self._tween_rgbas
+        i = j = k = 0
 
-        for tween_rect in self._tween_rects:
-            if self._apply_rect(tween_rect):
-                finished.append(tween_rect[2]) # Finished, return original instance
+        for tween in rects:
+            if self._apply_rect(tween):
+                self._scene.on_tweened(tween.target)
             else:
-                new_tween_rects.append(tween_rect) # Re-cycle back into system to finish
-        
-        self._tween_rects = new_tween_rects
+                rects[i] = tween
+                i += 1
+        del rects[i:]
 
-        for object_ in finished:
-            self._scene.on_tweened(object_)
+        for tween in rgbs:
+            if self._apply_rgb(tween):
+                self._scene.on_tweened(tween.target)
+            else:
+                rgbs[j] = tween
+                j += 1
+        del rgbs[j:]
 
-    def rect(self, origin: pygame.Rect, destination: pygame.Rect, duration: float, easing: Callable[[float], float] = Easing.LINEAR) -> None:
+        for tween in rgbas:
+            if self._apply_rgba(tween):
+                self._scene.on_tweened(tween.target)
+            else:
+                rgbas[k] = tween
+                k += 1
+        del rgbas[k:]
+
+    def color_rgb(self, original: ColorRGB, final: ColorRGB, duration: float, easing: Callable[[float], float]=Easing.LINEAR) -> None:
         '''
-        Tween/Animate an origin `pygame.Rect` to a destination `pygame.Rect` over a period of time.
+        Tween/Animate an original `ColorRGB` to a final `ColorRGB` over a period of time.
         
         Parameters
         ----------
-        origin : pygame.Rect
-            The origin rectangle to tween.
-        destination : pygame.Rect
-            The destination rectangle to tween the origin to.
+        original : ColorRGB
+            The original color to tween.
+        final : ColorRGB
+            The final color to tween the original to.
         duration : float
-            How long this tween/animation should take.
+            How long this tween/animation should take in seconds.
         easing : typing.Callable[[float], float]
             The easing function to use when animating.
         
         Raises
         ------
         TypeError
-            - If the provided origin is not a `pygame.Rect`.
+            - If the provided original is not a `ColorRGB`.
+            - If the provided final is not a `ColorRGB`.
+            - If the provided duration is not a `float` or `int`.
+        ValueError
+            If the provided duration is not greater than `0`.
+        '''
+
+        if not type(original) is ColorRGB:
+            error: str = "Parameter `original` must be a `ColorRGB`."
+            raise TypeError(error)
+        
+        if not type(final) is ColorRGB:
+            error: str = "Parameter `final` must be a `ColorRGB`."
+            raise TypeError(error)
+        
+        if not isinstance(duration, (float, int)):
+            error: str = "Parameter `duration` must be a `float` or `int`."
+            raise TypeError(error)
+        
+        if duration <= 0:
+            error: str = "Parameter `duration` must be greater than `0`."
+            raise ValueError(error)
+        
+        self._tween_rgbs.append(TweenRGB(original.copy(), final, original, duration, pygame.time.get_ticks(), easing))
+
+    def color_rgba(self, original: ColorRGBA, final: ColorRGBA, duration: float, easing: Callable[[float], float]=Easing.LINEAR) -> None:
+        '''
+        Tween/Animate an original `ColorRGBA` to a final `ColorRGBA` over a period of time.
+        
+        Parameters
+        ----------
+        original : ColorRGBA
+            The original color to tween.
+        final : ColorRGBA
+            The final color to tween the original to.
+        duration : float
+            How long this tween/animation should take in seconds.
+        easing : typing.Callable[[float], float]
+            The easing function to use when animating.
+        
+        Raises
+        ------
+        TypeError
+            - If the provided original is not a `ColorRGBA`.
+            - If the provided final is not a `ColorRGBA`.
+            - If the provided duration is not a `float` or `int`.
+        ValueError
+            If the provided duration is not greater than `0`.
+        '''
+
+        if not type(original) is ColorRGBA:
+            error: str = "Parameter `original` must be a `ColorRGBA`."
+            raise TypeError(error)
+        
+        if not type(final) is ColorRGBA:
+            error: str = "Parameter `final` must be a `ColorRGBA`."
+            raise TypeError(error)
+        
+        if not isinstance(duration, (float, int)):
+            error: str = "Parameter `duration` must be a `float` or `int`."
+            raise TypeError(error)
+        
+        if duration <= 0:
+            error: str = "Parameter `duration` must be greater than `0`."
+            raise ValueError(error)
+        
+        self._tween_rgbs.append(TweenRGBA(original.copy(), final, original, duration, pygame.time.get_ticks(), easing))
+
+    def rect(self, original: pygame.Rect, destination: pygame.Rect, duration: float, easing: Callable[[float], float]=Easing.LINEAR) -> None:
+        '''
+        Tween/Animate an original `pygame.Rect` to a destination `pygame.Rect` over a period of time.
+        
+        Parameters
+        ----------
+        original : pygame.Rect
+            The original rectangle to tween.
+        destination : pygame.Rect
+            The destination rectangle to tween the original to.
+        duration : float
+            How long this tween/animation should take in seconds.
+        easing : typing.Callable[[float], float]
+            The easing function to use when animating.
+        
+        Raises
+        ------
+        TypeError
+            - If the provided original is not a `pygame.Rect`.
             - If the provided destination is not a `pygame.Rect`.
             - If the provided duration is not a `float` or `int`.
         ValueError
             If the provided duration is not greater than `0`.
         '''
 
-        if not isinstance(origin, pygame.Rect):
-            error: str = "Parameter `origin` must be a `pygame.Rect`."
+        if not isinstance(original, pygame.Rect):
+            error: str = "Parameter `original` must be a `pygame.Rect`."
             raise TypeError(error)
         
         if not isinstance(destination, pygame.Rect):
@@ -216,4 +374,4 @@ class Tween:
             error: str = "Parameter `duration` must be greater than `0`."
             raise ValueError(error)
     
-        self._tween_rects.append((origin.copy(), destination, origin, duration, pygame.time.get_ticks(), easing))
+        self._tween_rects.append(TweenRect(original.copy(), destination, original, duration, pygame.time.get_ticks(), easing))
