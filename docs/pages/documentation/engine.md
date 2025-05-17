@@ -15,6 +15,7 @@ import wame
 engine: wame.Engine = wame.Engine(...)
 ```
 Simple right? Of course it is...however, we have to put some arguments into the constructor:
+
 - `name` is the name of the window that should be created.
 - `pipeline` is the rendering pipeline that the `Engine` should use when rendering elements to the screen (more on this in the `Pipeline` docs).
 - There's other arguments like `size`, `display`, and `icon_filepath` that are all documented as well.
@@ -35,14 +36,12 @@ The `Engine` requires all `Scene`s to be defined before runtime. This will be co
 import wame
 
 class TestScene(wame.Scene):
-    def __init__(self, engine: wame.Engine) -> None:
-        super().__init__(engine)
+    def on_init(self, *args, **kwargs) -> None:
+        ...
     
-    # Must be defined
     def on_render(self) -> None:
         ...
     
-    # Must be defined
     def on_update(self) -> None:
         ...
 
@@ -50,6 +49,7 @@ engine: wame.Engine = wame.Engine(...)
 engine.register_scene("Test", TestScene)
 ```
 Why do we register it?
+
 - This is so the `Engine` can keep track of it, so when we switch to different scene during runtime, it knows which scene to switch to.
 - However, to avoid circular imports, we track it by a unique name ("Test" in this case) so we can directly identify it without a direct reference.
 

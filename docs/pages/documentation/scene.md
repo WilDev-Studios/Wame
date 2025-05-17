@@ -3,6 +3,7 @@ On-demand context switching and organized events and calls - all features and el
 
 ## Scene Object
 Defined in `wame.scene`:
+
 - `Scene`s are defined by `wame`, with all methods and attributes already instantiated internally.
 - In order to successfully use `Scene`, you have to subclass it into a custom `~Scene` of your own, and register it to the engine to use.
 - Most of that functionality is featured in the `Engine` documentation, but this will be more in depth.
@@ -20,14 +21,15 @@ Defined in `wame.scene`:
 ```python
 # Creating a Scene
 class TestScene(wame.Scene): # You MUST subclass `wame.Scene`.
-    def __init__(self, engine: wame.Engine) -> None: # The engine will internally instantiate this `Scene` instance, and will pass itself into the constructor for reference purposes.
-        super().__init__(engine) # Instantiates the original scene, methods, and attributes
+    # This method will be called when it's time to initialize all your variables, etc. (after the scene has been internally instantiated).
+    def on_init(self, *args, **kwargs) -> None:
+        ...
 
-    # MUST be defined - This method will be called when it's time to render everything in the game loop
+    # This method will be called when it's time to render everything in the game loop
     def on_render(self) -> None:
         ...
     
-    # MUST be defined - This method will be called when it's time to update all logic and objects in the game loop
+    # This method will be called when it's time to update all logic and objects in the game loop
     def on_update(self) -> None:
         ...
 ```
@@ -40,6 +42,7 @@ engine.set_scene("Test") # Use the custom ID, as you cannot use a direct referen
 engine.start()
 ```
 The example above outlines the following process in the background, allowing the game to run:
+
 - Instantiating the `Engine` creates the game loop and all backend logic
 - Registering the `TestScene` tells the `Engine` to instantiate a `TestScene` instance when it sets the scene to "Test"
 - Setting the `Engine`'s scene to "Test" tells the `Engine` to lookup a scene under the "Test" ID, which is `TestScene` in this case, and instantiate it and close the previous scene (if any)
@@ -65,6 +68,7 @@ engine.set_scene("Main")
 engine.start()
 ```
 In the example above:
+
 - We try to register all scenes provided in all files from the `scenes` folder in our current directory
 - All `wame.Scene` subclasses MUST begin with a unique name like "Test" for `TestScene`, "Example1" for `Example1Scene`, etc.
 - When `register_scenes_from_folder` looks through all subclasses of `wame.Scene`, it creates the custom ID from the beginning words up to `Scene` in the name of the subclass. Creating, for example:

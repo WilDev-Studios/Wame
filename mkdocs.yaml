@@ -23,6 +23,8 @@ theme:
     - navigation.indexes
     - search.suggest
     - content.code.copy
+  icon:
+    repo: fontawesome/brands/github
 
 plugins:
   - search
@@ -61,6 +63,11 @@ markdown_extensions:
 
 extra:
   generator: false
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/WilDev-Studios/Wame
+    - icon: fontawesome/brands/discord
+      link: https://discord.gg/4Ggybyy87d
 
 nav:
   - Home: index.md

@@ -30,8 +30,8 @@ After installation:
 import wame
 
 class BasicScene(wame.Scene):
-    def __init__(self, engine: wame.Engine) -> None:
-        super().__init__(engine)
+    def on_init(self, *args, **kwargs) -> None:
+        ...
     
     def on_render(self) -> None:
         ...

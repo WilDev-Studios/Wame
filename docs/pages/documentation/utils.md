@@ -1,54 +1,57 @@
 # Utilities
-Contains commonly used functionality that many developers would need at some point. `Wame` takes care of this for you.
+## Overview
+This module defines methods, classes, and objects typically used frequently in game/application development.
+
+- `Keys`: Provides a mapping of all common `WASD` keyboard keys (`KEYCODE: MODIFIERS`) and various helper functions to determine what type of character(s) was/were typed.
+- `Tween`: Internalized functionality used in the animation of objects.
 
 ## Keys
-Defined in `wame.utils.keys`:
-- `KEYS`: A `keycode: modifiers` (`KC: MOD`) mapping of keyboard keys.
-- Conditional Methods:
-    - `is_char`: Checks if the provided `KC: MOD` mapping equates to a character on the common `WASD` keyboard.
-    - `is_letter`: Checks if the provided `KC: MOD` mapping equates to any (lower, upper)case letter.
-    - `is_lower`: Checks if the provided `KC: MOD` mapping equates to a lowercase letter.
-    - `is_number`: Checks if the provided `KC: MOD` mapping equates to a number.
-    - `is_symbol`: Checks if the provided `KC: MOD` mapping equates to a symbol (non-letter/number) character.
-    - `is_upper`: Checks if the provided `KC: MOD` mapping equates to a uppercase letter.
+Provides most functionality required for usual keyboard-related input.
 
-The `KEYS` mapping is particularly helpful with text input. It takes any `keycode: modifiers` combination and returns the appropriate, correct character typed, without unnecessary, bloated `if` or `match` statements.
+### Features
+- Well-documented mappings and methods.
+- `KEYS`: A comprehensive key-modifier mapping that provides a letter that corresponds to general `Pygame` input.
+- Helper functions:
+    - `is_char`: If the key(s) pressed equate to any character on the `WASD` keyboard.
+    - `is_letter`: If they equate to any letter.
+    - `is_lower`: If they equate to any lowercase letter.
+    - `is_number`: If they equate to any number.
+    - `is_symbol`: If they equate to any symbol.
+    - `is_upper`: If they equate to any uppercase letter.
 
-## OTHER FEATURES
-Defined in `wame.utils._____`:
-- ...
-
-## Example Programs
+### Examples
 ```python
-# Check if the character typed equals uppercase a ('A')
-# Provided keycode: int, modifiers: int
-
-# Old, bloated method
-return keycode == pygame.K_a and modifiers in (pygame.KMOD_SHIFT, pygame.KMOD_CAPS)
-
-# Better, easy method
-return KEYS[(keycode, modifiers)] == 'A'
-```
-```python
-# If you are trying to figure out which key was typed
-if keycode == pygame.K_a and modifiers in (pygame.KMOD_SHIFT, pygame.KMOD_CAPS):
-    return 'A'
-elif keycode == pygame.K_a and modifiers == pygame.KMOD_NONE:
-    return 'a'
-elif keycode == pygame.K_b and modifiers in (pygame.KMOD_SHIFT, pygame.KMOD_CAPS):
-    return 'B'
-# etc. etc.
-
-# Just do this:
+key: str = KEYS[(keycode, modifiers)]
+if KEYS[(keycode, modifiers)] == 'a': ...
 return KEYS[(keycode, modifiers)]
-# Just be aware, if it doesn't exist on the common `WASD` keyboard, you will get a `KeyError`, so keep it in mind
+if (keycode, modifiers) in KEYS: ...
 ```
+
+## Tween
+Animation/tweening helper class to assist developers in smoothly move objects.
+
+### Features
+- Framerate-independent animation.
+- Type-safe methods and strict annotations.
+- Heavily-optimized internal arithmetic for heavy, tight game loops.
+- Automatic integration with `Scene` for ease-of-use and finishing event dispatching.
+- Support for:
+    - `pygame.Rect` with `rect`.
+    - `ColorRGB` with `color_rgb`.
+    - `ColorRGBA` with `color_rgba`.
+- `Easing` bundling class for defined, handy easing functions:
+    - Bounce: `BOUNCE_IN`, `BOUNCE_OUT`, `BOUNCE_IN_OUT`.
+    - Cubic: `CUBIC_IN`, `CUBIC_OUT`, `CUBIC_INT_OUT`.
+    - Linear with `LINEAR`.
+    - Quad: `QUAD_IN`, `QUAD_OUT`, `QUAD_IN_OUT`.
+    - Quartic: `QUARTIC_IN`, `QUARTIC_OUT`, `QUARTIC_IN_OUT`.
+    - Quintic: `QUINTIC_IN`, `QUINTIC_OUT`, `QUINTIC_IN_OUT`.
+    - Sine: `SINE_IN`, `SINE_OUT`, `SINE_IN_OUT`.
+
+### Examples
 ```python
-# Check if the key is an uppercase letter
-return is_upper(keycode, modifiers)
-
-# Check if the key is a symbol
-return is_symbol(keycode, modifiers)
-
-# Etc.
+# Move and resize rectangle over 10 seconds
+rect = pygame.Rect(0, 0, 100, 100)
+destination = pygame.Rect(100, 100, 500, 500) # Move to 100, 100 and resize x5
+tween.rect(rect, destination, 10.0, Easing.LINEAR) # 10s, linear easing
 ```

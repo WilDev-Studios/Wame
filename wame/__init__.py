@@ -2,7 +2,7 @@
 ## Wame Engine
 Simple, Pythonic, Intuitive, Pygame Wrapper
 
-#### Documentation: https://wame.wildevstudios.net/en/latest/
+#### Documentation: https://wame.wildevstudios.net/en/v0.7.0/
 #### GitHub: https://github.com/WilDev-Studios/Wame/
 '''
 

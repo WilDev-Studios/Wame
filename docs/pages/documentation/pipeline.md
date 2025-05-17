@@ -3,6 +3,7 @@ The `wame` game `Engine` uses different rendering pipelines, defined below, to r
 
 ## Pipeline Types
 Defined in `wame.pipeline`:
+
 - `OPENGL`: Flags the `Engine` to only set `Pygame` up to use `OpenGL` rendering, and only changes the background color to the desired, normalized `RGB` values:
     - Allows the use of most `Pygame` functionality, but rendering is left to raw `OpenGL` commands, like those found in `PyOpenGL`.
     - This is very advanced, and not recommended for most developers unless performance is critical (and development time is extended).

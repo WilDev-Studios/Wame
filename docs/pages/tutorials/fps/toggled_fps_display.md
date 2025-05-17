@@ -12,9 +12,7 @@ import pygame
 import wame
 
 class TutorialScene(wame.Scene):
-    def __init__(self, engine: wame.Engine) -> None:
-        super().__init__(engine)
-
+    def on_init(self, *args, **kwargs) -> None:
         self.fps_text: Text = Text(self.frame, "FPS | 0", (125, 125, 125), pygame.font.SysFont("Ubuntu", 12))
         self.fps_text.set_pixel_position((5, 5))
         self.fps_text.enabled = False # Default to disabled

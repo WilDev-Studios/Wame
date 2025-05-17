@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pygame
 
-KEYS:dict[tuple[int, int], str] = {
+KEYS: dict[tuple[int, int], str] = {
     (pygame.K_a, pygame.KMOD_SHIFT | pygame.KMOD_CAPS): 'A',
     (pygame.K_b, pygame.KMOD_SHIFT | pygame.KMOD_CAPS): 'B',
     (pygame.K_c, pygame.KMOD_SHIFT | pygame.KMOD_CAPS): 'C',
@@ -103,23 +103,23 @@ KEYS:dict[tuple[int, int], str] = {
     (pygame.K_PERIOD, pygame.KMOD_NONE): '.',
     (pygame.K_SLASH, pygame.KMOD_NONE): '/',
 }
-'''Mapping of `(KEYCODE, MODIFIERS)` -> `KEY`'''
+'''Mapping of `(KEYCODE, MODIFIERS)` -> `KEY`.'''
 
-def is_char(key:int, mods:int) -> bool:
+def is_char(key: int, mods: int) -> bool:
     '''
-    Check to see if this key/mods combination equates to a character on the keyboard
+    Check to see if this key/mods combination equates to a character on the keyboard.
     
     Parameters
     ----------
     key : int
-        The raw `pygame` key code
+        The raw `pygame` key code.
     mods : int
-        The raw `pygame` key mods
+        The raw `pygame` key mods.
     
     Returns
     -------
     bool
-        If this key/mods combination equates to a character on the keyboard
+        If this key/mods combination equates to a character on the keyboard.
     '''
 
     if not KEYS.get((key, mods), None):
@@ -127,40 +127,40 @@ def is_char(key:int, mods:int) -> bool:
 
     return True
 
-def is_letter(key:int, mods:int) -> bool:
+def is_letter(key: int, mods: int) -> bool:
     '''
-    Check to see if this key/mods combination equates to a letter
+    Check to see if this key/mods combination equates to a letter.
     
     Parameters
     ----------
     key : int
-        The raw `pygame` key code
+        The raw `pygame` key code.
     mods : int
-        The raw `pygame` key mods
+        The raw `pygame` key mods.
     
     Returns
     -------
     bool
-        If this key/mods combination equates to a letter
+        If this key/mods combination equates to a letter.
     '''
 
     return is_upper(key, mods) or is_lower(key, mods)
 
-def is_lower(key:int, mods:int) -> bool:
+def is_lower(key: int, mods: int) -> bool:
     '''
-    Check to see if this key/mods combination equates to a lowercase letter
+    Check to see if this key/mods combination equates to a lowercase letter.
     
     Parameters
     ----------
     key : int
-        The raw `pygame` key code
+        The raw `pygame` key code.
     mods : int
-        The raw `pygame` key mods
+        The raw `pygame` key mods.
     
     Returns
     -------
     bool
-        If this key/mods combination equates to a lowercase letter
+        If this key/mods combination equates to a lowercase letter.
     '''
 
     return KEYS.get((key, mods), None) in [
@@ -170,21 +170,21 @@ def is_lower(key:int, mods:int) -> bool:
         'v', 'w', 'x', 'y', 'z'
     ]
 
-def is_number(key:int, mods:int) -> bool:
+def is_number(key: int, mods: int) -> bool:
     '''
-    Check to see if this key/mods combination equates to a number/digit
+    Check to see if this key/mods combination equates to a number/digit.
     
     Parameters
     ----------
     key : int
-        The raw `pygame` key code
+        The raw `pygame` key code.
     mods : int
-        The raw `pygame` key mods
+        The raw `pygame` key mods.
     
     Returns
     -------
     bool
-        If this key/mods combination equates to a number/digit
+        If this key/mods combination equates to a number/digit.
     '''
 
     return KEYS.get((key, mods), None) in [
@@ -192,21 +192,21 @@ def is_number(key:int, mods:int) -> bool:
         '6', '7', '8', '9', '0'
     ]
 
-def is_symbol(key:int, mods:int) -> bool:
+def is_symbol(key: int, mods: int) -> bool:
     '''
-    Check to see if this key/mods combination equates to a symbol
+    Check to see if this key/mods combination equates to a symbol.
     
     Parameters
     ----------
     key : int
-        The raw `pygame` key code
+        The raw `pygame` key code.
     mods : int
-        The raw `pygame` key mods
+        The raw `pygame` key mods.
     
     Returns
     -------
     bool
-        If this key/mods combination equates to a symbol
+        If this key/mods combination equates to a symbol.
     '''
 
     return KEYS.get((key, mods), None) in [
@@ -216,21 +216,21 @@ def is_symbol(key:int, mods:int) -> bool:
         '|', '\\', '<', ',', '>', '.', '?', '/'
     ]
 
-def is_upper(key:int, mods:int) -> bool:
+def is_upper(key: int, mods: int) -> bool:
     '''
-    Check to see if this key/mods combination equates to an uppercase letter
+    Check to see if this key/mods combination equates to an uppercase letter.
     
     Parameters
     ----------
     key : int
-        The raw `pygame` key code
+        The raw `pygame` key code.
     mods : int
-        The raw `pygame` key mods
+        The raw `pygame` key mods.
     
     Returns
     -------
     bool
-        If this key/mods combination equates to an uppercase letter
+        If this key/mods combination equates to an uppercase letter.
     '''
 
     return KEYS.get((key, mods), None) in [
