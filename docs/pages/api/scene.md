@@ -4,4 +4,4 @@ description: Engine Scenes
 ---
 
 # Scene
-::: wame.scene
+::: wame.scene.Scene

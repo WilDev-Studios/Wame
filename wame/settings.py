@@ -41,7 +41,14 @@ class Settings:
             error:str = "Antialiasing setting must be a boolean."
             raise ValueError(error)
         
+        changed: bool = self._antialiasing != value
         self._antialiasing = int(value)
+
+        if not changed:
+            return
+        
+        for hook in self._engine._antialiasing_hooks:
+            hook()
     
     @property
     def max_fps(self) -> int:

@@ -1,38 +1,64 @@
 from __future__ import annotations
 
+from queue import Queue
+from termcolor import colored
+from threading import Thread
+from typing import Callable, Union
 from wame.color.rgb import ColorRGB
 from wame.vector import IntVector2
 from wame.interval import Interval
 from wame.settings import Settings
 from wame.pipeline import Pipeline
+from wame.plugins.plugin import Plugin
+from wame.plugins.events.base import Event, CancellableEvent
+from wame.plugins.events.lifetime import LoadEvent, UnloadEvent
+from wame.plugins.execution import ExecutionStep
 from wame.scene import Scene
 
 import ast
+import datetime
 import importlib
+import importlib.util
 import json
 import os
 import pygame
+import sys
 import time
 
 pygame.init()
 pygame.font.init()
 pygame.joystick.init()
 
+DIRECTORY: str = os.getcwd()
+PLUGINS_DIRECTORY: str = os.path.join(DIRECTORY, "plugins")
+
 class Engine:
     '''Game Engine'''
     
     __slots__ = (
-        "_name", "_screen", "_delta_time", "_running",
+        "_name", "_screen", "_delta_time", "_running", "_debug",
         "_last_frame_time", "_raw_fps", "settings", "_settings_persistent",
-        "_scene", "_scenes", "_set_fps", "_background_color", "_size",
-        "_mouse_visibility", "_mouse_grabbed", "_pipeline", "_display",
-        "_fixed_update_interval", "_fixed_update_accumulator", "_fixed_update_last",
-        "_game_loop_enabled", "_poll_game_loop"
+        "_context", "_antialiasing_hooks", "_scene", "_scenes", "_set_fps",
+        "_background_color", "_size", "_mouse_visibility", "_mouse_grabbed",
+        "_pipeline", "_display", "_fixed_update_interval",
+        "_fixed_update_accumulator", "_fixed_update_last",
+        "_game_loop_enabled", "_poll_game_loop", "_log_thread",
+        "_log_queue", "_plugins", "_plugin_events",
     )
 
     _previously_instantiated:bool = False
 
-    def __init__(self, name: str, pipeline: Pipeline, *, size: IntVector2=IntVector2(0, 0), display: int=0, icon: pygame.Surface=None, settings_persistent: bool=True) -> None:
+    def __init__(
+        self,
+        name: str,
+        pipeline: Pipeline,
+        *,
+        size: IntVector2=None,
+        display: int=0,
+        icon: pygame.Surface=None,
+        settings_persistent: bool=True,
+        debug: bool=False
+    ) -> None:
         '''
         Instantiates a game engine that handles all backend code for running games.
         
@@ -43,19 +69,23 @@ class Engine:
         pipeline : Pipeline
             The pipeline library the engine should use.
         size : IntVector2
-            The X and Y sizes for the game window.
+            The X and Y sizes for the game window - If `None`, defaults to `0, 0` values.
         display : int
             The index of the display/monitor for the rendering screen.
         icon : pygame.Surface
             The image/surface of the game window icon.
         settings_persistent : bool
             If the engine should read and write the internal `wame.settings.Settings` object persistently, otherwise persistency will be controlled by the developer.
+        debug : bool
+            If the debug mode should be enabled - Allows debug logs to be shown.
         
         Raises
         ------
         RuntimeError
             - If more than one instance of `wame.engine.Engine` is created during runtime.
             - If an unsupported `wame.pipeline.Pipeline` is set as the pipeline.
+        TypeError:
+            If the provided `context` is not of type `Context`.
         '''
 
         if Engine._previously_instantiated:
@@ -64,10 +94,11 @@ class Engine:
         
         Engine._previously_instantiated = True
 
-        self._name:str = name
-        self._screen:pygame.Surface = None
-        self._delta_time:float = 0.001
-        self._running:bool = False
+        self._name: str = name
+        self._screen: pygame.Surface = None
+        self._delta_time: float = 0.001
+        self._running: bool = False
+        self._debug: bool = debug
 
         self._last_frame_time: float = time.perf_counter()
         self._raw_fps: float = 0.0
@@ -77,9 +108,10 @@ class Engine:
                 with open("settings.json", 'w') as file:
                     file.write("{}")
         
-        self.settings:Settings = None
+        self.settings: Settings = None
         '''The settings that the engine renders/runs the game with'''
-        self._settings_persistent:bool = settings_persistent
+        self._settings_persistent: bool = settings_persistent
+        self._antialiasing_hooks: set[Callable[[None], None]] = set()
 
         if self._settings_persistent:
             with open("settings.json") as file:
@@ -87,24 +119,24 @@ class Engine:
         else:
             self.settings = Settings({}, self)
 
-        self._scene:Scene = None
-        self._scenes:dict[str, Scene] = {}
+        self._scene: Scene = None
+        self._scenes: dict[str, Scene] = {}
 
-        self._set_fps:int = self.settings.max_fps
-        self._background_color:ColorRGB = ColorRGB(0, 0, 0)
+        self._set_fps: int = self.settings.max_fps
+        self._background_color: ColorRGB = ColorRGB(0, 0, 0)
 
-        self._size:IntVector2 = size
+        self._size: IntVector2 = (size if isinstance(size, IntVector2) else IntVector2.from_iterable(size)) if size else IntVector2(0, 0)
 
-        self._mouse_visibility:bool = True
-        self._mouse_grabbed:bool = False
+        self._mouse_visibility: bool = True
+        self._mouse_grabbed: bool = False
         
-        self._pipeline:Pipeline = pipeline
+        self._pipeline: Pipeline = pipeline
 
         if pipeline not in [Pipeline.PYGAME, Pipeline.OPENGL]:
             error:str = "Sorry, the requested pipeline is not supported."
             raise RuntimeError(error)
         
-        self._display:int = display
+        self._display: int = display
         self.set_pipeline(pipeline)
 
         if icon:
@@ -115,17 +147,74 @@ class Engine:
         pygame.mouse.set_visible(self._mouse_visibility)
         pygame.event.set_grab(self._mouse_grabbed)
 
-        self._fixed_update_interval:float = Interval.HZ_60.value
-        self._fixed_update_accumulator:float = 0.0
-        self._fixed_update_last:float = 0.0
+        self._fixed_update_interval: float = Interval.HZ_60.value
+        self._fixed_update_accumulator: float = 0.0
+        self._fixed_update_last: float = 0.0
 
         self._game_loop_enabled: bool = True
         self._poll_game_loop: bool = False
 
+        self._log_thread: Thread = Thread(target=self._log_thread_loop, daemon=True)
+        self._log_queue: Queue = Queue()
+        self._log_thread.start()
+
+        self._plugins: set[Plugin] = set()
+        self._plugin_events: dict[ExecutionStep, dict[Event, set[Callable]]] = {}
+        self._register_plugins()
+
     def _cleanup(self) -> None:
+        for plugin in self._plugins:
+            if UnloadEvent in plugin._lifetime_events:
+                event_instance: UnloadEvent = UnloadEvent(self)
+
+                for callback in plugin._lifetime_events[UnloadEvent]:
+                    callback(event_instance)
+
+        if self._log_thread:
+            self._log_queue.put(None)
+            self._log_thread.join()
+
         if self._settings_persistent:
             with open("settings.json", 'w') as file:
                 json.dump(self.settings.export(), file, indent=4)
+
+    def _log_msg(self, level: str, src: str, log: str) -> None:
+        color: str = "cyan"
+
+        if level == "dbug":
+            color = "green"
+        elif level == "warn":
+            color = "yellow"
+        elif level == "crit":
+            color = "red"
+
+        self._log_queue.put(
+            f"[ {colored(datetime.datetime.now().strftime("%H:%M:%S.%f"), color)} ][ {colored(level.upper(), color)} ][ {colored(src, color)} ] {colored(log, color)}"
+        )
+
+    def _log_crit(self, src: str, log: str) -> None:
+        self._log_msg("crit", src, log)
+    
+    def _log_dbug(self, src: str, log: str) -> None:
+        if not self._debug:
+            return
+        
+        self._log_msg("dbug", src, log)
+
+    def _log_info(self, src: str, log: str) -> None:
+        self._log_msg("info", src, log)
+    
+    def _log_warn(self, src: str, log: str) -> None:
+        self._log_msg("warn", src, log)
+
+    def _log_thread_loop(self) -> None:
+        while True:
+            log: str = self._log_queue.get()
+
+            if not log:
+                return
+
+            print(log)
 
     def _mainloop(self) -> None:
         if not self.scene:
@@ -171,6 +260,89 @@ class Engine:
 
         self._scene._cleanup()
         self._cleanup()
+
+    def _dispatch_plugin_event(self, step: ExecutionStep, event: type[Event], **kwargs) -> bool:
+        if step not in self._plugin_events:
+            return False
+        
+        if event not in self._plugin_events[step]:
+            return False
+        
+        event_instance: Event = event(self)
+        cancellable: bool = isinstance(event_instance, CancellableEvent)
+
+        for keyword, argument in kwargs.items():
+            setattr(event_instance, f"_{keyword}", argument)
+
+        for callback in self._plugin_events[step][event]:
+            if cancellable and event_instance.is_cancelled:
+                break
+            
+            callback(event_instance)
+        
+        return cancellable and event_instance.is_cancelled
+
+    def _register_plugins(self) -> None:
+        if not os.path.exists(PLUGINS_DIRECTORY):
+            self._log_dbug("Engine", "No plugins directory found. Skipping plugin registration.")
+            return
+        
+        for filename in os.listdir(PLUGINS_DIRECTORY):
+            folder_directory: str = os.path.join(PLUGINS_DIRECTORY, filename)
+            if not os.path.isdir(folder_directory):
+                self._log_warn("Engine", f"File found in plugins directory isn't a folder. Skipping file: {folder_directory}")
+                continue
+
+            program_file: str = os.path.join(folder_directory, "main.py")
+            if not os.path.exists(program_file):
+                self._log_warn("Engine", f"No plugin program file called \"main.py\" found in plugin folder. Skipping plugin at: {os.path.dirname(folder_directory)}")
+                continue
+
+            module_name: str = f"wame_plugin_{folder_directory}"
+            spec = importlib.util.spec_from_file_location(module_name, program_file)
+            if spec is None or spec.loader is None:
+                self._log_warn("Engine", f"Couldn't load file specification from plugin program. Skipping plugin at: {os.path.dirname(folder_directory)}")
+                continue
+
+            module = importlib.util.module_from_spec(spec)
+            try:
+                sys.modules[module_name] = module_name
+                spec.loader.exec_module(module)
+            except Exception as error:
+                self._log_crit("Engine", f"Failed to load plugin `{folder_directory}`: {error}")
+                continue
+
+            for attribute_name in dir(module):
+                attribute = getattr(module, attribute_name)
+
+                if not isinstance(attribute, type) or not issubclass(attribute, Plugin) or attribute is Plugin:
+                    continue
+
+                try:
+                    instance: Plugin = attribute(self, folder_directory)
+                    self._plugins.add(instance)
+
+                    self._log_dbug("Engine", f"Loaded plugin {instance.__class__.__name__} into instance")
+                except Exception as error:
+                    self._log_crit("Engine", f"Failed to load plugin `{folder_directory}`: {error}")
+        
+        for plugin in self._plugins:
+            for step, events in plugin._events.items():
+                if step not in self._plugin_events:
+                    self._plugin_events[step] = {}
+
+                for event, callbacks in events.items():
+                    if event not in self._plugin_events[step]:
+                        self._plugin_events[step][event] = set()
+                    
+                    for callback in callbacks:
+                        self._plugin_events[step][event].add(callback)
+                        self._log_dbug("Engine", f"Registered event callback for {event.__name__}: {plugin.__class__.__name__}.{callback.__name__}")
+
+            if LoadEvent in plugin._lifetime_events:
+                event: LoadEvent = LoadEvent(self)
+                for callback in plugin._lifetime_events[LoadEvent]:
+                    callback(event)
 
     @property
     def background_color(self) -> ColorRGB:
@@ -338,11 +510,11 @@ class Engine:
             raise TypeError(error)
 
         if not os.path.exists(folder):
-            error:str = f"Folder \"{folder}\" could not be found."
+            error: str = f"Folder \"{folder}\" could not be found."
             raise RuntimeError(error)
         
         if not os.path.isdir(folder):
-            error:str = f"Item with name \"{folder}\" is not a folder/directory."
+            error: str = f"Item with name \"{folder}\" is not a folder/directory."
             raise RuntimeError(error)
         
         for filename in os.listdir(folder):
@@ -350,21 +522,21 @@ class Engine:
                 continue
 
             with open(f"{folder}/{filename}") as file:
-                contents:str = file.read()
+                contents: str = file.read()
             
-            tree:ast.Module = ast.parse(contents)
-            classes:list[ast.ClassDef] = [node for node in ast.walk(tree) if isinstance(node, ast.ClassDef)]
+            tree: ast.Module = ast.parse(contents)
+            classes: list[ast.ClassDef] = [node for node in ast.walk(tree) if isinstance(node, ast.ClassDef)]
 
             for fileClass in classes:
-                endIndex:int = fileClass.name.find("Scene")
+                endIndex: int = fileClass.name.find("Scene")
 
                 if endIndex < 0:
                     continue
 
-                sceneName:str = fileClass.name[0:endIndex]
+                sceneName: str = fileClass.name[0:endIndex]
                 
                 module = importlib.import_module(f"{folder}.{filename[:-3]}")
-                sceneObject:Scene = getattr(module, fileClass.name)
+                sceneObject: Scene = getattr(module, fileClass.name)
 
                 self.register_scene(sceneName, sceneObject, overwrite)
 
@@ -375,7 +547,7 @@ class Engine:
         return self._running
 
     @property
-    def scene(self) -> Scene:
+    def scene(self) -> Union[Scene, None]:
         '''The currently active scene - `None` if not running.'''
 
         return self._scene
@@ -515,6 +687,8 @@ class Engine:
         if pipeline == Pipeline.PYGAME:
             self._screen = pygame.display.set_mode(self._size.to_tuple(), pygame.HWSURFACE | pygame.DOUBLEBUF, display=self._display, vsync=self.settings.vsync)
         else:
+            error: str = "Any pipeline besides `PYGAME` is unsupported as of this version"
+            raise RuntimeError(error)
             self._screen = pygame.display.set_mode(self._size.to_tuple(), pygame.HWSURFACE | pygame.DOUBLEBUF | pygame.OPENGL, display=self._display, vsync=self.settings.vsync)
 
     def set_scene(self, name: str, *args, **kwargs) -> None:
@@ -553,7 +727,6 @@ class Engine:
         
         if self.scene is not None:
             self.scene._cleanup()
-            del self.scene
 
         self._scene = self._scenes[name](self, *args, **kwargs)
         self._scene._first()
@@ -572,8 +745,6 @@ class Engine:
         
         Raises
         ------
-        RuntimeError
-            If trying to switch interval timing during the game loop.
         TypeError
             If the interval provided is not an `Interval`, `float`, or `int`.
         '''
@@ -581,10 +752,6 @@ class Engine:
         if not isinstance(interval, (Interval, float, int)):
             error: str = "Parameter `interval` must be an `Interval` object, `float`, or `int`."
             raise TypeError(error)
-
-        if self.scene and self.scene._first_elapsed:
-            error:str = "Switching update intervals during the game loop is not supported"
-            raise RuntimeError(error)
 
         self._fixed_update_interval = interval.value if isinstance(interval, Interval) else interval
 

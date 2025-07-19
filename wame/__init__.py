@@ -1,5 +1,5 @@
 '''
-## Wame Engine
+## Wame v0.8.0
 Simple, Pythonic, Intuitive, Pygame Wrapper
 
 #### Documentation: https://wame.wildevstudios.net/en/v0.8.0/
@@ -16,3 +16,6 @@ from wame import color
 from wame import ui
 from wame import utils
 from wame import vector
+
+version: str = "0.8.0"
+'''Installed `wame` version.'''

@@ -1,212 +1,458 @@
 from __future__ import annotations
+from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from wame.scene import Scene
+
+from dataclasses import dataclass
+from numpy import ndarray
+from typing import Callable, Iterable, Union
 from wame.color.rgb import ColorRGBA
-from wame.vector.xy import FloatVector2, IntVector2
-from wame.ui.renderable import Renderable
-
-from OpenGL.GLU import *
-from OpenGL.GL import *
+from wame.ui.anchor import Anchor
+from wame.ui.element import Element
+from wame.utils.tween import Easing, Tween
+from wame.vector.xy import IntVector2
 
 import pygame
-import wame
 
-class Frame(Renderable):
-    '''UI Container.'''
+__all__ = ("Frame", "FrameBorderMetadata", "FrameTween",)
+
+@dataclass(frozen=True, slots=True)
+class FrameTween:
+    started_at: int
+    duration: Union[int, float]
+    easing: Callable[[float], float]
+    start_position: tuple[Union[int, float], Union[int, float]]
+    start_size: tuple[Union[int, float], Union[int, float]]
+    end_position: tuple[Union[int, float], Union[int, float]]
+    end_size: tuple[Union[int, float], Union[int, float]]
+
+@dataclass(slots=True)
+class FrameBorderMetadata:
+    width: int
+    color: ColorRGBA
+    bottom_left_radius: int
+    bottom_right_radius: int
+    top_left_radius: int
+    top_right_radius: int
+
+class Frame(Element):
+    '''User-Interface Frame.'''
 
     __slots__ = (
-        "_parent", "_children", "_color", "_border_color", "_border_width",
-        "_flipped",
+        "_local_position", "_local_size", "_anchor", "_calculated_position",
+        "_calculated_size", "_color", "_border", "_tween",
     )
+    _local_position: tuple[Union[int, float], Union[int, float]]
+    _local_size: tuple[Union[int, float], Union[int, float]]
+    _anchor: Anchor
+    _calculated_position: IntVector2
+    _calculated_size: IntVector2
+    _color: ColorRGBA
+    _border: FrameBorderMetadata
+    _tween: FrameTween
 
-    def __init__(self, parent: 'Frame', *, color: ColorRGBA=None, y_flipped: bool=False) -> None:
+    def __init__(
+        self, scene: 'Scene', parent: Element, *,
+        position: tuple[Union[int, float], Union[int, float]],
+        size: tuple[Union[int, float], Union[int, float]],
+        anchor: Anchor=Anchor.TOP_LEFT,
+        color: ColorRGBA=None
+    ) -> None:
         '''
-        Create a UI frame.
+        Create a new user interface frame.
         
         Parameters
         ----------
-        parent : Frame
-            The parent of this frame.
+        scene : Scene
+            The scene to interface this instance with.
+        parent : Element
+            Any `~Element`-like object to make the parent of this instance.
+        position : tuple[int | float, int | float]
+            - The X and Y values for the pixels in which this element will be placed.
+            - If `int` they represent absolute pixel values, otherwise (`float`) will represent scaled pixel values.
+        size : tuple[int | float, int | float]
+            - The X and Y values for the pixels in which this element will be sized.
+            - If `int` they represent absolute pixel values, otherwise (`float`) will represent scaled pixel values.
+        anchor : Anchor
+            The chosen area of this element to place at the position provided.
         color : ColorRGBA
-            The background color of the frame.
-        y_flipped : bool
-            If it should be rendered with the Y-axis flipped - May be necessary depending on your OpenGL setup.
+            If provided, the color of this element when rendered.
         
-        Note
-        ----
-        Scenes already natively contain a UI frame. Unless you want to make a sub-frame to encapsulate other child renderables, using the `Scene`'s `frame` attribute should be sufficient
-
-        Info
-        ----
-        The `y_flipped` variable is only needed if you are using the `OPENGL` `Pipeline` and this object is upside down based on your `OpenGL` context.
+        Raises
+        ------
+        TypeError
+            - Provided anchor isn't an `Anchor` object.
+            - Provided position X and Y values aren't `int` or `float`.
+            - Provided size X and Y values aren't `int` or `float.
+        ValueError
+            - If any value of position or size are `float` and are not between `0` and `1`.
+            - If values of position and size are not two values in length.
         '''
+        
+        for value in [position[0], position[1], size[0], size[1]]:
+            if isinstance(value, int):
+                continue
 
-        super().__init__(parent if isinstance(parent, wame.Engine) else parent._engine)
+            if isinstance(value, float):
+                if 0.0 > value or value > 1.0:
+                    error: str = "Position and size values must be between 0 and 1 if they are `float`"
+                    raise ValueError(error)
+                
+                continue
 
-        if isinstance(parent, Frame):
-            parent.add_child(self)
-            
-            self._parent = parent
-        else: # If natively set to the engine, this is the scene's native frame (no parent)
-            self._parent = None
-
-        self._children:list[Renderable] = []
-
-        self._color:ColorRGBA = (color if isinstance(color, ColorRGBA) else ColorRGBA.from_iterable(color)) if color else None
-
-        self._border_color:ColorRGBA = None
-        self._border_width:int = None
-
-        self._flipped:bool = y_flipped
-
-    def render(self) -> None:
-        '''
-        Render this frame and it's children to the screen.
-        '''
-
-        if not self.rect:
-            error:str = "The frame must have its size and position set before rendering"
+            error: str = "Position and size values can only contain `int` or `float` values"
+            raise TypeError(error)
+        
+        if len(position) != 2 or len(size) != 2:
+            error: str = "Position and size values can only contain 2 values each"
             raise ValueError(error)
-    
-        if self._color:
-            if self._engine._pipeline == wame.Pipeline.PYGAME:
-                pygame.draw.rect(
-                    self._engine.screen, self._color.to_tuple(), self.rect
-                )
-            elif self._engine._pipeline == wame.Pipeline.OPENGL:
-                posY:int = self._engine.screen.get_height() - (self.rect.top + self.rect.height)
-                posWidth:int = self.rect.left + self.rect.width
-                posHeight:int = self.rect.top + self.rect.height
-
-                glMatrixMode(GL_PROJECTION)
-                glLoadIdentity()
-
-                gluOrtho2D(0, self._engine.screen.get_width(), 0, self._engine.screen.get_height())
-                glMatrixMode(GL_MODELVIEW)
-                glLoadIdentity()
-
-                glPushMatrix()
-
-                glDisable(GL_LIGHTING)
-                glDisable(GL_TEXTURE_2D)
-
-                glColor4f(*self._color.normalized())
-
-                glBegin(GL_QUADS)
-                if self._flipped:
-                    glVertex2f(self.rect.left, posHeight)
-                    glVertex2f(posWidth, posHeight)
-                    glVertex2f(posWidth, posY)
-                    glVertex2f(self.rect.left, posY)
-                else:
-                    glVertex2f(self.rect.left, posY)
-                    glVertex2f(posWidth, posY)
-                    glVertex2f(posWidth, posHeight)
-                    glVertex2f(self.rect.left, posHeight)
-                glEnd()
-
-                glPopMatrix()
         
-        if self._border_color and self._border_width >= 1:
-            # Lines are straight, no point in antialiasing them
+        if not isinstance(anchor, Anchor):
+            error: str = "Provided anchor must be an `Anchor` object"
+            raise TypeError(error)
+        
+        super().__init__(scene, parent)
 
-            if self._engine._pipeline == wame.Pipeline.PYGAME:
-                for index in range(self._border_width):
-                    pygame.draw.lines(self._engine.screen, self._border_color.to_tuple(), True, [
-                        (self.rect.left + index, self.rect.top + index), (self.rect.left + self.rect.width - index, self.rect.top + index),
-                        (self.rect.left + self.rect.width - index, self.rect.top + self.rect.height - index), (self.rect.left + index, self.rect.top + self.rect.height - index)
-                    ])
-            elif self._engine._pipeline == wame.Pipeline.OPENGL:
-                ...
+        if parent:
+            self._parent.add_child(self)
+
+        self._local_position: tuple[Union[int, float], Union[int, float]] = position
+        self._local_size: tuple[Union[int, float], Union[int, float]] = size
+        self._anchor: Anchor = anchor
+
+        self._calculated_position: IntVector2 = None
+        self._calculated_size: IntVector2 = None
+        self._apply_transform()
+
+        self._border: FrameBorderMetadata = None
+        self._color: ColorRGBA = (color if isinstance(color, ColorRGBA) else ColorRGBA.from_iterable(color)) if color else None
+
+        self._tween: FrameTween = None
+    
+    def __repr__(self) -> str:
+        return f"Frame(pos={self._calculated_position}, size={self._calculated_size}, anchor={self._anchor}, color={self._color})"
+
+    def _apply_transform(self) -> None:
+        self._calculated_position, self._calculated_size = self._calculate_transform(self._local_position, self._local_size)
 
         for child in self._children:
-            child.ask_render()
-    
-    def set_border(self, color: ColorRGBA, width: int) -> None:
-        '''
-        Set the border of this object.
-        
-        Parameters
-        ----------
-        color : ColorRGBA
-            The color to set the border to.
-        width : int
-            The width of the border.
-        '''
+            child._apply_transform()
 
-        self._border_color = color if isinstance(color, ColorRGBA) else ColorRGBA.from_iterable(color)
-        self._border_width = width
-
-    def set_color(self, color: ColorRGBA) -> None:
-        '''
-        Set the color of this object.
-        
-        Parameters
-        ----------
-        color : ColorRGBA
-            The color of this object.
-        '''
-
-        self._color = color if isinstance(color, ColorRGBA) else ColorRGBA.from_iterable(color)
-
-    def set_pixel_transform(self, position: IntVector2, size: IntVector2) -> None:
-        '''
-        Set the exact pixel transform (position, size) of this object.
-        
-        Parameters
-        ----------
-        position : IntVector2
-            The exact position of this object from the top-left point.
-        size : IntVector2
-            The exact size of this object.
-        '''
-
-        position = position if isinstance(position, IntVector2) else IntVector2.from_iterable(position)
-
-        if self._parent:
-            position.x += self._parent.rect.left
-            position.y += self._parent.rect.top
-
-        size = size if isinstance(size, IntVector2) else IntVector2.from_iterable(size)
-
-        self.rect = pygame.Rect(*position, *size)
-
-    def set_scaled_transform(self, position: FloatVector2, size: FloatVector2) -> None:
-        '''
-        Set the scaled transform (position, size) of this object.
-        
-        Parameters
-        ----------
-        position : FloatVector2
-            The scaled position of this object from the top-left point.
-        size : FloatVector2
-            The scaled size of this object.
-        '''
-
-        position = position if isinstance(position, FloatVector2) else FloatVector2.from_iterable(position)
-        size = size if isinstance(size, FloatVector2) else FloatVector2.from_iterable(size)
-
-        if position.x < 0 or position.x > 1 or position.y < 0 or position.y > 1:
-            error: str = "Scaled position X, Y values must be between 0 and 1."
-            raise ValueError(error)
-        
-        if size.x < 0 or size.x > 1 or size.y < 0 or size.y > 1:
-            error: str = "Scaled size X, Y values must be between 0 and 1."
-            raise ValueError(error)
-        
-        new_position: IntVector2 = IntVector2(0, 0)
+    def _calculate_transform(self, position: tuple[Union[int, float], Union[int, float]], size: tuple[Union[int, float], Union[int, float]]) -> tuple[IntVector2, IntVector2]:
         new_size: IntVector2 = IntVector2(0, 0)
+        new_position: IntVector2 = IntVector2(0, 0)
 
-        if self._parent:
-            new_position.x = int(self._parent.rect.left + (self._parent.rect.width * position.x))
-            new_position.y = int(self._parent.rect.top + (self._parent.rect.height * position.y))
+        parent_bounds: pygame.Rect = self._parent.bounds if self._parent else self._scene.screen.get_rect()
 
-            new_size.x = int(self._parent.rect.width * size.x)
-            new_size.y = int(self._parent.rect.height * size.y)
+        if isinstance(size[0], int):
+            new_size.x = size[0]
         else:
-            new_position.x = int(self._engine.screen.get_width() * position.x)
-            new_position.y = int(self._engine.screen.get_height() * position.y)
+            new_size.x = round(size[0] * parent_bounds.width)
+        
+        if isinstance(size[1], int):
+            new_size.y = size[1]
+        else:
+            new_size.y = round(size[1] * parent_bounds.height)
+        
+        if isinstance(position[0], int):
+            new_position.x = position[0] + parent_bounds.x
+        else:
+            new_position.x = round(position[0] * parent_bounds.width) + parent_bounds.x
 
-            new_size.x = int(self._engine.screen.get_width() * size.x)
-            new_size.y = int(self._engine.screen.get_height() * size.y)
+        if isinstance(position[1], int):
+            new_position.y = position[1] + parent_bounds.y
+        else:
+            new_position.y = round(position[1] * parent_bounds.height) + parent_bounds.y
+        
+        return Anchor.calculate_position(new_position, new_size, self._anchor), new_size
 
-        self.rect = pygame.Rect(*new_position, *new_size)
+    @staticmethod
+    def _interpolate(start: Union[int, float], end: Union[int, float], progress: float) -> Union[int, float]:
+        return start + (end - start) * progress
+
+    def _update(self) -> None:
+        if not self._tween:
+            return
+        
+        progress: float = Tween.calculate_progress(self._tween.started_at, self._tween.duration, self._tween.easing)
+
+        self._local_position = (
+            self._interpolate(self._tween.start_position[0], self._tween.end_position[0], progress),
+            self._interpolate(self._tween.start_position[1], self._tween.end_position[1], progress)
+        )
+        self._local_size = (
+            self._interpolate(self._tween.start_size[0], self._tween.end_size[0], progress),
+            self._interpolate(self._tween.start_size[1], self._tween.end_size[1], progress)
+        )
+
+        self._apply_transform()
+
+        if progress < 1.0:
+            return
+        
+        self._tween = None
+        
+        if not self._tween_callback:
+            return
+        
+        self._tween_callback()
+
+    @property
+    def bounds(self) -> pygame.Rect:
+        return pygame.Rect(self._calculated_position, self._calculated_size)
+
+    @property
+    def color(self) -> Union[ColorRGBA, None]:
+        '''The color of this frame - Can be `None`.'''
+        return self._color
+    
+    @color.setter
+    def color(self, color: ColorRGBA) -> None:
+        self._color = (color if isinstance(color, ColorRGBA) else ColorRGBA.from_iterable(color)) if color else None
+
+    def render(self) -> None:
+        if self._color:
+            if self._border:
+                pygame.draw.rect(self._scene.screen, self._color, self.bounds,
+                    border_top_left_radius=self._border.top_left_radius,
+                    border_top_right_radius=self._border.top_right_radius,
+                    border_bottom_left_radius=self._border.bottom_left_radius,
+                    border_bottom_right_radius=self._border.bottom_right_radius
+                )
+            else:
+                pygame.draw.rect(self._scene.screen, self._color, self.bounds)
+        
+        if self._border:
+            pygame.draw.rect(self._scene.screen, self._border.color, self.bounds, self._border.width,
+                border_top_left_radius=self._border.top_left_radius,
+                border_top_right_radius=self._border.top_right_radius,
+                border_bottom_left_radius=self._border.bottom_left_radius,
+                border_bottom_right_radius=self._border.bottom_right_radius
+            )
+    
+    def set_border(
+        self, color: ColorRGBA=None, *, width: int=1, radius: int=0,
+        radius_bottom_left: int=None, radius_bottom_right: int=None,
+        radius_top_left: int=None, radius_top_right: int=None
+    ) -> None:
+        '''
+        Set the border attributes of this element.
+        
+        Parameters
+        ----------
+        color : ColorRGBA
+            The color to set the border as - `None` will disable the border.
+        width : int
+            The width of the border - `None`/`0` will disable the border.
+        radius : int
+            The radius of the border - Initial value of all corners unless overriden by following parameters.
+        radius_bottom_left : int
+            The radius of the bottom left corner.
+        radius_bottom_right: int
+            The radius of the bottom right corner.
+        radius_top_left : int
+            The radius of the top left corner.
+        radius_top_right : int
+            The radius of the top right corner.
+        
+        Raises
+        ------
+        TypeError
+            - If `width` is not an `int`.
+            - If any `radius` value isn't an `int`.
+        ValueError
+            If any `radius` value is less than `0`.
+        '''
+
+        if not color or not width or width == 0:
+            self._border = None
+            return
+
+        color: ColorRGBA = color if isinstance(color, ColorRGBA) else ColorRGBA.from_iterable(color)
+
+        if not isinstance(width, int):
+            error: str = "Provided width must be an `int`"
+            raise TypeError(error)
+        
+        values: list[int] = [radius]
+
+        if radius_bottom_left: values.append(radius_bottom_left)
+        if radius_bottom_right: values.append(radius_bottom_right)
+        if radius_top_left: values.append(radius_top_left)
+        if radius_top_right: values.append(radius_top_right)
+
+        for value in values:
+            if isinstance(value, int):
+                if value >= 0:
+                    continue
+
+                error: str = "Radius values must be `0` or greater"
+                raise ValueError(error)
+
+            error: str = "Radius values must be `int`"
+            raise TypeError(error)
+        
+        self._border = FrameBorderMetadata(
+            width, color,
+            bottom_left_radius=radius_bottom_left if radius_bottom_left else radius,
+            bottom_right_radius=radius_bottom_right if radius_bottom_right else radius,
+            top_left_radius=radius_top_left if radius_top_left else radius,
+            top_right_radius=radius_top_right if radius_top_right else radius,
+        )
+
+    def set_transform(
+        self, *, anchor: Anchor=None,
+        position: tuple[Union[int, float], Union[int, float]]=None,
+        size: tuple[Union[int, float], Union[int, float]]=None,
+    ) -> None:
+        '''
+        Set the transform (position, size, anchor) attributes of this element.
+        
+        Parameters
+        ----------
+        anchor : Anchor
+            If provided, change the anchor point of this element.
+        position : tuple[int | float, int | float]
+            If provided, change the position of this element - `int` for absolute, `float` for scaled.
+        size : tuple[int | float, int | float]
+            If provided, change the size of this element - `int` for absolute, `float` for scaled.
+        
+        Info
+        ----
+        `anchor`, `position`, or `size` are optional, but one has to be specified.
+
+        Raises
+        ------
+        TypeError
+            - Provided anchor isn't an `Anchor` object.
+            - Provided position X and Y values aren't `int` or `float`.
+            - Provided size X and Y values aren't `int` or `float.
+        ValueError
+            - If none of the parameters above are provided.
+            - If any value of position or size are `float` and are not between `0` and `1`.
+        '''
+        
+        if not anchor and not position and not size:
+            error: str = "Method requires at least one of `anchor`, `position`, or `size` to be specified"
+            raise ValueError(error)
+
+        if anchor:
+            if not isinstance(anchor, Anchor):
+                error: str = "Provided anchor must be an `Anchor` object"
+                raise TypeError(error)
+            
+            self._anchor = anchor
+        
+        if position:
+            if not isinstance(position[0], (int, float)) or not isinstance(position[1], (int, float)):
+                error: str = "Provided position X and Y values must be either `int` or `float`"
+                raise TypeError(error)
+            
+            if isinstance(position[0], float) and (0.0 > position[0] or 1.0 < position[0]):
+                error: str = "Provided position X value must be between 0 and 1 as it's a `float`"
+                raise ValueError(error)
+            
+            if isinstance(position[1], float) and (0.0 > position[1] or 1.0 < position[1]):
+                error: str = "Provided position Y value must be between 0 and 1 as it's a `float`"
+                raise ValueError(error)
+            
+            self._local_position = position
+        
+        if size:
+            if not isinstance(size[0], (int, float)) or not isinstance(size[1], (int, float)):
+                error: str = "Provided size X and Y values must be either `int` or `float`"
+                raise TypeError(error)
+            
+            if isinstance(size[0], float) and (0.0 > size[0] or 1.0 < size[0]):
+                error: str = "Provided size X value must be between 0 and 1 as it's a `float`"
+                raise ValueError(error)
+            
+            if isinstance(size[1], float) and (0.0 > size[1] or 1.0 < size[1]):
+                error: str = "Provided size Y value must be between 0 and 1 as it's a `float`"
+                raise ValueError(error)
+            
+            self._local_size = size
+        
+        self._apply_transform()
+    
+    def tween(
+        self, *, position: Iterable[Union[int, float]]=None,
+        size: Iterable[Union[int, float]]=None, duration: float,
+        easing: Callable[[float], float]=Easing.LINEAR
+    ) -> None:
+        '''
+        Tween/animate this element to an end state over a period of time.
+        
+        Parameters
+        ----------
+        position : typing.Iterable[int | float]
+            The end position to reach, if provided.
+        size : typing.Iterable[int | float]
+            The end size to reach, if provided.
+        duration : float
+            The time in which it'll take to animate this element in seconds.
+        easing : typing.Callable[[float], float]
+            The easing function to use when animating.
+        
+        Info
+        ----
+        - Parameters `position` and `size` are mutually exclusive.
+        - Either one, or both, has to be passed.
+        
+        Raises
+        ------
+        TypeError
+            - If `position` or `size` are not iterable objects.
+            - If `duration` is not `int` or `float`.
+        ValueError
+            - If `position` and `size` are not defined.
+            - If `position` or `size` don't contain only two values.
+            - If `position`, `size`, or `duration` don't contain `int` or `float` values.
+        '''
+        
+        if not position and not size:
+            error: str = "At least one of `end_position` or `end_size` must be defined"
+            raise ValueError(error)
+
+        if position and not isinstance(position, (tuple, list, ndarray)):
+            error: str = "Provided `position` must be an iterable (tuple, list, NumPy array, etc.)"
+            raise TypeError(error)
+        
+        if size and not isinstance(size, (tuple, list, ndarray)):
+            error: str = "Provided `size` must be an iterable (tuple, list, NumPy array, etc.)"
+            raise TypeError(error)
+        
+        if not isinstance(duration, (int, float)):
+            error: str = "Provided `duration` must be an `int` or `float`"
+            raise TypeError(error)
+        
+        if position and len(position) != 2:
+            error: str = "Provided `position` can only contain two values"
+            raise ValueError(error)
+        
+        if size and len(size) != 2:
+            error: str = "Provided `size` can only contain two values"
+            raise ValueError(error)
+
+        values: list[Union[int, float]] = [duration]
+
+        if position:
+            values.extend([position[0], position[1]])
+        
+        if size:
+            values.extend([size[0], size[1]])
+
+        for value in values:
+            if isinstance(value, (int, float)):
+                continue
+
+            error: str = "Provided `position`, `size`, and `duration` values can only contain `int` or `float` values"
+            raise ValueError(error)
+        
+        self._tween = FrameTween(
+            pygame.time.get_ticks(), duration, easing,
+            self._local_position, self._local_size,
+            position if position else self._local_position,
+            size if size else self._local_size
+        )
