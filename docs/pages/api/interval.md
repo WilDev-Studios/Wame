@@ -3,5 +3,6 @@ title: Interval
 description: Fixed Update Intervals
 ---
 
-# Intervals
+## Intervals
+
 ::: wame.interval

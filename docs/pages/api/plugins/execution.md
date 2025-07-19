@@ -3,5 +3,6 @@ title: Execution
 description: Plugin Execution
 ---
 
-# Execution
+## Execution
+
 ::: wame.plugins.execution

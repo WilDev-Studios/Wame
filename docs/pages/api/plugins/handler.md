@@ -3,5 +3,6 @@ title: Handler
 description: Plugin Handler
 ---
 
-# Handler
+## Handler
+
 ::: wame.plugins.handler

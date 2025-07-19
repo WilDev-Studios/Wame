@@ -3,5 +3,6 @@ title: RGB
 description: RGB Color Objects
 ---
 
-# RGB
+## RGB
+
 ::: wame.color.rgb

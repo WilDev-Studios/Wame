@@ -3,5 +3,6 @@ title: Keys
 description: Key Functionality
 ---
 
-# Keys
+## Keys
+
 ::: wame.utils.keys

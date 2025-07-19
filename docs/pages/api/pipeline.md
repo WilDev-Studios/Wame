@@ -3,5 +3,6 @@ title: Pipeline
 description: Engine Rendering Pipeline
 ---
 
-# Pipeline
+## Pipeline
+
 ::: wame.pipeline

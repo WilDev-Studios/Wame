@@ -3,5 +3,6 @@ title: Values
 description: RGB Values
 ---
 
-# Values
+## Values
+
 ::: wame.color.values

@@ -3,5 +3,6 @@ title: Plugin
 description: Plugins
 ---
 
-# Plugin
+## Plugin
+
 ::: wame.plugins.plugin

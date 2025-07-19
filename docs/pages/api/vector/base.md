@@ -3,5 +3,6 @@ title: Base
 description: Vector Definition
 ---
 
-# Vectors
+## Vectors
+
 ::: wame.vector.base

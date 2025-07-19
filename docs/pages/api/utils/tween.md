@@ -3,5 +3,6 @@ title: Tween
 description: Tween/Animation Functionality
 ---
 
-# Tween
+## Tween
+
 ::: wame.utils.tween

@@ -3,5 +3,6 @@ title: Settings
 description: Engine Persistent Settings
 ---
 
-# Settings
+## Settings
+
 ::: wame.settings
