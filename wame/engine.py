@@ -707,8 +707,6 @@ class Engine:
         if pipeline == Pipeline.PYGAME:
             self._screen = pygame.display.set_mode(self._size.to_tuple(), pygame.HWSURFACE | pygame.DOUBLEBUF, display=self._display, vsync=self.settings.vsync)
         else:
-            error: str = "Any pipeline besides `PYGAME` is unsupported as of this version"
-            raise RuntimeError(error)
             self._screen = pygame.display.set_mode(self._size.to_tuple(), pygame.HWSURFACE | pygame.DOUBLEBUF | pygame.OPENGL, display=self._display, vsync=self.settings.vsync)
         
         self._dispatch_plugin_event(ExecutionStep.AFTER, PipelineChangedEvent, pipeline=pipeline)
