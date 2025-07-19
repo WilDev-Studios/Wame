@@ -53,6 +53,30 @@ class PipelineChangedEvent(EngineEvent):
         '''The new rendering pipeline.'''
         return self._pipeline
 
+class SettingsAntialiasingChangedEvent(EngineEvent):
+    '''Dispatched when the engine's antialiasing setting changed.'''
+
+    @property
+    def enabled(self) -> bool:
+        '''If antialiasing is enabled.'''
+        return self._enabled
+
+class SettingsMaxFPSChangedEvent(EngineEvent):
+    '''Dispatched when the engine's max FPS setting changed.'''
+
+    @property
+    def value(self) -> int:
+        '''The engine's max FPS setting.'''
+        return self._value
+    
+class SettingsVSyncChangedEvent(EngineEvent):
+    '''Dispatched when the engine's v-sync setting changed.'''
+
+    @property
+    def enabled(self) -> bool:
+        '''If v-sync is enabled.'''
+        return self._enabled
+
 class SceneRegisteredEvent(EngineEvent):
     '''Dispatched when the engine registers a scene.'''
 

@@ -6,6 +6,12 @@ if TYPE_CHECKING:
     from wame.engine import Engine
 
 from wame.pipeline import Pipeline
+from wame.plugins.events.engine import (
+    SettingsAntialiasingChangedEvent,
+    SettingsMaxFPSChangedEvent,
+    SettingsVSyncChangedEvent
+)
+from wame.plugins.execution import ExecutionStep
 
 import pygame
 
@@ -47,8 +53,12 @@ class Settings:
         if not changed:
             return
         
+        self._engine._dispatch_plugin_event(ExecutionStep.BEFORE, SettingsAntialiasingChangedEvent, enabled=value)
+
         for hook in self._engine._antialiasing_hooks:
             hook()
+        
+        self._engine._dispatch_plugin_event(ExecutionStep.AFTER, SettingsAntialiasingChangedEvent, enabled=value)
     
     @property
     def max_fps(self) -> int:
@@ -66,8 +76,10 @@ class Settings:
             error: str = "Max FPS value must be 0 or above."
             raise ValueError(error)
         
+        self._engine._dispatch_plugin_event(ExecutionStep.BEFORE, SettingsMaxFPSChangedEvent, value=value)
         self._max_fps = value
         self._engine._set_fps = self._max_fps
+        self._engine._dispatch_plugin_event(ExecutionStep.AFTER, SettingsMaxFPSChangedEvent, value=value)
     
     @property
     def vsync(self) -> bool:
@@ -81,12 +93,15 @@ class Settings:
             error: str = "VSync value must be a boolean."
             raise ValueError(error)
         
+        self._engine._dispatch_plugin_event(ExecutionStep.BEFORE, SettingsVSyncChangedEvent, enabled=value)
         self._vsync = int(value)
 
         if self._engine._pipeline == Pipeline.PYGAME:
             self._engine._screen = pygame.display.set_mode(self._engine._size.to_tuple(), pygame.HWSURFACE | pygame.DOUBLEBUF, display=self._engine._display, vsync=self._vsync)
         else:
             self._engine._screen = pygame.display.set_mode(self._engine._size.to_tuple(), pygame.HWSURFACE | pygame.DOUBLEBUF | pygame.OPENGL, display=self._engine._display, vsync=self._vsync)
+
+        self._engine._dispatch_plugin_event(ExecutionStep.AFTER, SettingsVSyncChangedEvent, enabled=value)
 
     def export(self) -> dict[str, int]:
         return {
