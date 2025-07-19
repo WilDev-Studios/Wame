@@ -295,13 +295,13 @@ class Engine:
 
             program_file: str = os.path.join(folder_directory, "main.py")
             if not os.path.exists(program_file):
-                self._log_warn("Engine", f"No plugin program file called \"main.py\" found in plugin folder. Skipping plugin at: {os.path.dirname(folder_directory)}")
+                self._log_warn("Engine", f"No plugin program file called \"main.py\" found in plugin folder. Skipping plugin at: {folder_directory}")
                 continue
 
             module_name: str = f"wame_plugin_{folder_directory}"
             spec = importlib.util.spec_from_file_location(module_name, program_file)
             if spec is None or spec.loader is None:
-                self._log_warn("Engine", f"Couldn't load file specification from plugin program. Skipping plugin at: {os.path.dirname(folder_directory)}")
+                self._log_warn("Engine", f"Couldn't load file specification from plugin program. Skipping plugin at: {folder_directory}")
                 continue
 
             module = importlib.util.module_from_spec(spec)
@@ -322,9 +322,9 @@ class Engine:
                     instance: Plugin = attribute(self, folder_directory)
                     self._plugins.add(instance)
 
-                    self._log_dbug("Engine", f"Loaded plugin {instance.__class__.__name__} into instance")
+                    self._log_dbug("Engine", f"Loaded plugin {instance.__class__.__name__.replace('_', '.')} into instance")
                 except Exception as error:
-                    self._log_crit("Engine", f"Failed to load plugin `{folder_directory}`: {error}")
+                    self._log_crit("Engine", f"Failed to load plugin at `{folder_directory}`: {error}")
         
         for plugin in self._plugins:
             for step, events in plugin._events.items():

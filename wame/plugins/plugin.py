@@ -83,7 +83,7 @@ class Plugin:
             The message to log to the console.
         '''
         
-        self._engine._log_crit(self.__class__.__name__, log)
+        self._engine._log_crit(self.__class__.__name__.replace('_', '.'), log)
 
     def log_debug(self, log: str) -> None:
         '''
@@ -95,7 +95,7 @@ class Plugin:
             The message to log to the console.
         '''
         
-        self._engine._log_dbug(self.__class__.__name__, log)
+        self._engine._log_dbug(self.__class__.__name__.replace('_', '.'), log)
 
     def log_info(self, log: str) -> None:
         '''
@@ -107,7 +107,7 @@ class Plugin:
             The message to log to the console.
         '''
         
-        self._engine._log_info(self.__class__.__name__, log)
+        self._engine._log_info(self.__class__.__name__.replace('_', '.'), log)
 
     def log_warn(self, log: str) -> None:
         '''
@@ -119,4 +119,4 @@ class Plugin:
             The message to log to the console.
         '''
         
-        self._engine._log_warn(self.__class__.__name__, log)
+        self._engine._log_warn(self.__class__.__name__.replace('_', '.'), log)
