@@ -43,7 +43,7 @@ class Engine:
         "_pipeline", "_display", "_fixed_update_interval",
         "_fixed_update_accumulator", "_fixed_update_last",
         "_game_loop_enabled", "_poll_game_loop", "_log_thread",
-        "_log_queue", "_plugins", "_plugin_events",
+        "_log_queue", "_plugins", "_plugin_events", "_plugin_max_length",
     )
 
     _previously_instantiated: bool = False
@@ -160,6 +160,7 @@ class Engine:
 
         self._plugins: set[Plugin] = set()
         self._plugin_events: dict[ExecutionStep, dict[Event, set[Callable]]] = {}
+        self._plugin_max_length: int = 6
         self._register_plugins()
 
     def _cleanup(self) -> None:
@@ -187,6 +188,8 @@ class Engine:
             color = "yellow"
         elif level == "crit":
             color = "red"
+
+        src = ' ' * (self._plugin_max_length - len(src)) + src
 
         self._log_queue.put(
             f"[ {colored(datetime.datetime.now().strftime("%H:%M:%S.%f"), color)} ][ {colored(level.upper(), color)} ][ {colored(src, color)} ] {colored(log, color)}"
@@ -322,7 +325,12 @@ class Engine:
                     instance: Plugin = attribute(self, folder_directory)
                     self._plugins.add(instance)
 
-                    self._log_dbug("Engine", f"Loaded plugin {instance.__class__.__name__.replace('_', '.')} into instance")
+                    name: str = instance.__class__.__name__.replace('_', '.')
+
+                    if len(name) > self._plugin_max_length:
+                        self._plugin_max_length = len(name)
+
+                    self._log_dbug("Engine", f"Loaded plugin {name} into instance")
                 except Exception as error:
                     self._log_crit("Engine", f"Failed to load plugin at `{folder_directory}`: {error}")
         
