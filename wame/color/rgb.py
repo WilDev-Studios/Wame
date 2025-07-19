@@ -343,7 +343,7 @@ class ColorRGB:
 class ColorRGBA(ColorRGB):
     '''Red, Green, Blue, Alpha - Color Object.'''
 
-    __slots__ = ("_r", "_g", "_b", "_a", "_nr", "_ng", "_nb",)
+    __slots__ = ("_a",)
     _r: int
     _g: int
     _b: int

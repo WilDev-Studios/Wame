@@ -1,8 +1,8 @@
 '''
-## Wame Engine
+## Wame v0.8.0
 Simple, Pythonic, Intuitive, Pygame Wrapper
 
-#### Documentation: https://wame.wildevstudios.net/en/v0.7.0/
+#### Documentation: https://wame.wildevstudios.net/en/v0.8.0/
 #### GitHub: https://github.com/WilDev-Studios/Wame/
 '''
 
@@ -16,3 +16,6 @@ from wame import color
 from wame import ui
 from wame import utils
 from wame import vector
+
+version: str = "0.8.0"
+'''Installed `wame` version.'''

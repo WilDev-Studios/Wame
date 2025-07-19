@@ -1,4 +1,5 @@
 # Wame Engine Changelog
+
 We try to provide as much detail as possible so developers can understand which versions of `wame` they would like to develop with.
 
 !!! danger "Disclaimer"

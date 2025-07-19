@@ -1,300 +1,361 @@
 from __future__ import annotations
+from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from wame.scene import Scene
+
+from dataclasses import dataclass
+from numpy import ndarray
+from typing import Callable, Iterable, Union
 from wame.color.rgb import ColorRGBA
-from wame.ui.frame import Frame
-from wame.ui.renderable import Renderable
-from wame.vector.xy import IntVector2, FloatVector2
-
-from wame.pipeline import Pipeline
-
-from OpenGL.GL import *
+from wame.ui.anchor import Anchor
+from wame.ui.element import Element
+from wame.utils.tween import Easing, Tween
+from wame.vector.xy import IntVector2
 
 import pygame
 
-class Text(Renderable):
-    '''UI Text Object.'''
+__all__ = ("TextTween", "Text",)
 
-    __slots__ = (
-        "_parent", "_color", "_colors", "_font", "_fonts", "raw_text", "text",
-        "_gl_texture_id", "_flipped",
-    )
+@dataclass(frozen=True, slots=True)
+class TextTween:
+    started_at: int
+    duration: Union[int, float]
+    easing: Callable[[float], float]
+    start_position: tuple[Union[int, float], Union[int, float]]
+    end_position: tuple[Union[int, float], Union[int, float]]
 
-    def __init__(self, parent: Frame, text: str, color: ColorRGBA, font: pygame.font.Font, y_flipped: bool=False) -> None:
-        """
-        Instantiate a Text object.
+class Text(Element):
+    '''User-Interface Text.'''
 
+    def __init__(
+        self,
+        scene: 'Scene',
+        parent: Element,
+        *,
+        text: str,
+        color: ColorRGBA,
+        font: pygame.font.Font,
+        position: tuple[Union[int, float], Union[int, float]],
+        anchor: Anchor = Anchor.TOP_LEFT
+    ) -> None:
+        '''
+        Create a new user interface text.
+        
         Parameters
         ----------
-        parent : Frame
-            The frame that will act as this child's parent.
+        scene : Scene
+            The scene to interface this instance with.
+        parent : Element
+            Any `~Element`-like object to make the parent of this instance.
         text : str
-            The raw text that will be originally displayed.
+            The text that will be shown.
         color : ColorRGBA
-            The color of the text.
+            The color of the foreground (text).
         font : pygame.font.Font
-            The font of the text.
-        y_flipped : bool
-            Flips the position and orientation based on `OpenGL` context.
+            The font to render the text as.
+        position : tuple[int | float, int | float]`
+            - The X and Y values for the pixels in which this element will be placed.
+            - If `int` they represent absolute pixel values, otherwise (`float`) will represent scaled pixel values.
+        anchor : Anchor
+            The chosen area of this element to place at the position provided.
+        
+        Raises
+        ------
+        TypeError
+            - Provided text isn't a `str`.
+            - Provided font isn't a `pygame.font.Font`.
+            - Provided position X and Y values aren't `int` or `float`.
+            - Provided anchor isn't an `Anchor` object.
+        ValueError
+            - If any value of position is `float` and is not between `0` and `1`.
+            - If values of position are not two values in length.
+        '''
+
+        if not isinstance(text, str):
+            error: str = "Provided text must be a `str` object"
+            raise TypeError(error)
+        
+        if not isinstance(font, pygame.font.Font):
+            error: str = "Provided font must be a `pygame.font.Font` object"
+            raise TypeError(error)
+        
+        for value in [position[0], position[1]]:
+            if isinstance(value, int):
+                continue
+
+            if isinstance(value, float):
+                if 0.0 > value or value > 1.0:
+                    error: str = "Position values must be between 0 and 1 if they are `float`"
+                    raise ValueError(error)
+                
+                continue
+
+            error: str = "Position can only contain `int` or `float` values"
+            raise TypeError(error)
+        
+        if len(position) != 2:
+            error: str = "Position values can only contain 2 values"
+            raise ValueError(error)
+        
+        if not isinstance(anchor, Anchor):
+            error: str = "Provided anchor must be an `Anchor` object"
+            raise TypeError(error)
+        
+        super().__init__(scene, parent)
+        self._parent.add_child(self)
+        self._scene.engine._antialiasing_hooks.add(self._update_text)
+
+        self._local_position: tuple[Union[int, float], Union[int, float]] = position
+        self._anchor: Anchor = anchor
+
+        self._calculated_position: IntVector2 = None
+
+        self._color: ColorRGBA = color if isinstance(color, ColorRGBA) else ColorRGBA.from_iterable(color)
+
+        self._text: str = text
+        self._font: pygame.font.Font = font
+
+        self.text_render: pygame.Surface = None
+        '''Rendered internal text object that is updated every change - Usable with `OpenGL` as well.'''
+
+        self._tween: TextTween = None
+
+        self._update_text()
+        self._apply_transform()
+
+    def __repr__(self) -> str:
+        return "Text(" + ', '.join([
+            f"pos={self._calculated_position}",
+            f"size={self.text_render.get_rect().size}",
+            f"anchor={self._anchor}",
+            f"color={self._color}",
+            f"text={self._text}",
+            f"font={self._font}"
+        ]) + ')'
+    
+    def _apply_transform(self) -> None:
+        self._calculated_position = self._calculate_transform(self._local_position)
+
+        for child in self._children:
+            child._apply_transform()
+
+    def _calculate_transform(
+        self,
+        position: tuple[Union[int, float], Union[int, float]]
+    ) -> IntVector2:
+        new_position: IntVector2 = IntVector2(0, 0)
+
+        parent_bounds: pygame.Rect = self._parent.bounds
+        
+        if isinstance(position[0], int):
+            new_position.x = position[0] + parent_bounds.x
+        else:
+            new_position.x = round(position[0] * parent_bounds.width) + parent_bounds.x
+        
+        if isinstance(position[1], int):
+            new_position.y = position[1] + parent_bounds.y
+        else:
+            new_position.y = round(position[1] * parent_bounds.height) + parent_bounds.y
+        
+        return Anchor.calculate_position(new_position, IntVector2.from_iterable(self.text_render.get_rect().size), self._anchor)
+    
+    @staticmethod
+    def _interpolate(start: Union[int, float], end: Union[int, float], progress: float) -> Union[int, float]:
+        return start + (end - start) * progress
+    
+    def _update(self) -> None:
+        if not self._tween:
+            return
+        
+        progress: float = Tween.calculate_progress(self._tween.started_at, self._tween.duration, self._tween.easing)
+        self._local_position = (
+            self._interpolate(self._tween.start_position[0], self._tween.end_position[0], progress),
+            self._interpolate(self._tween.start_position[1], self._tween.end_position[1], progress)
+        )
+
+        self._apply_transform()
+
+        if progress < 1.0:
+            return
+        
+        self._tween = None
+
+        if not self._tween_callback:
+            return
+        
+        self._tween_callback()
+    
+    def _update_text(self) -> None:
+        self.text_render = self._font.render(self._text, self._scene.engine.settings.antialiasing, self._color)
+    
+    @property
+    def bounds(self) -> pygame.Rect:
+        return pygame.Rect(self._calculated_position, self.text_render.get_rect().size)
+    
+    @property
+    def color_text(self) -> ColorRGBA:
+        '''The color of the text.'''
+        return self._color
+    
+    @color_text.setter
+    def color_text(self, value: ColorRGBA) -> None:
+        if not value:
+            error: str = "A color must be provided"
+            raise ValueError(error)
+        
+        self._color = value if isinstance(value, ColorRGBA) else ColorRGBA.from_iterable(value)
+        self._update_text()
+
+    @property
+    def text(self) -> str:
+        '''The text being shown in this element.'''
+        return self._text
+    
+    @text.setter
+    def text(self, value: str) -> None:
+        if not value:
+            error: str = "A text string must be provided"
+            raise ValueError(error)
+        
+        if not isinstance(value, str):
+            error: str = "Text string value must be `str`"
+            raise TypeError(error)
+        
+        self._text = value
+        self._update_text()
+
+    def render(self) -> None:
+        self._scene.screen.blit(self.text_render, self._calculated_position)
+
+    def set_font(self, font: pygame.font.Font) -> None:
+        '''
+        Set the font of the rendered text.
+        
+        Parameters
+        ----------
+        font : pygame.font.Font
+            The font to set the text to render as.
+        
+        Raises
+        ------
+        TypeError
+            If the provided font is not `pygame.font.Font`
+        '''
+
+        if not isinstance(font, pygame.font.Font):
+            error: str = "Font must be of type `pygame.font.Font`"
+            raise TypeError(error)
+        
+        self._font = font
+        self._update_text()
+
+    def set_transform(
+        self,
+        *,
+        anchor: Anchor = None,
+        position: tuple[Union[int, float], Union[int, float]] = None,
+    ) -> None:
+        '''
+        Set the transform (position, size, anchor) attributes of this element.
+        
+        Parameters
+        ----------
+        anchor : Anchor
+            If provided, change the anchor point of this element.
+        position : tuple[int | float, int | float]
+            If provided, change the position of this element - `int` for absolute, `float` for scaled.
         
         Info
         ----
-        The `y_flipped` variable is only needed if you are using the `OPENGL` `Pipeline` and this object is upside down based on your `OpenGL` context.
-        """
-
-        super().__init__(parent._engine)
-
-        color = color if isinstance(color, ColorRGBA) else ColorRGBA.from_iterable(color)
-
-        parent.add_child(self)
-        self._parent:Frame = parent
-
-        self._color:ColorRGBA = color
-        self._colors:dict[str, ColorRGBA] = {
-            "default": color
-        }
-
-        self._font:pygame.font.Font = font
-        self._fonts:dict[str, pygame.font.Font] = {
-            "default": font
-        }
-
-        self.raw_text:str = text
-        self.text:pygame.Surface = font.render(text, self._engine.settings.antialiasing, color.to_tuple())
-        self._gl_texture_id = None
-        self._flipped:bool = y_flipped
-
-        self._render_text()
-
-    def _render_text(self) -> None:
-        self.text = self._font.render(self.raw_text, self._engine.settings.antialiasing, self._color.to_tuple())
-
-        if self._engine._pipeline != Pipeline.OPENGL:
-            return
-        
-        if self._gl_texture_id:
-            glDeleteTextures([self._gl_texture_id])
-
-        textData = pygame.image.tostring(self.text, "RGBA", True)
-        width, height = self.text.get_size()
-
-        self._gl_texture_id = glGenTextures(1)
-        glBindTexture(GL_TEXTURE_2D, self._gl_texture_id)
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, textData)
-        glBindTexture(GL_TEXTURE_2D, 0)
-
-    def add_color(self, name: str, color: ColorRGBA, overwrite: bool=False) -> None:
-        """
-        Register a color with this object.
-        
-        Parameters
-        ----------
-        name : str
-            The unique name for this color.
-        color : ColorRGBA
-            The color to register.
-        overwrite : bool
-            If this already exists, if it's ok to overwrite.
-        
-        Raises
-        ------
-        ValueError
-            If the unique name already exists.
-        """
-
-        if name in self._colors and not overwrite:
-            error:str = f"Color with name {name} is already registered as a color."
-            raise ValueError(error)
-
-        self._colors[name] = color if isinstance(color, ColorRGBA) else ColorRGBA.from_iterable(color)
-
-    def add_font(self, name: str, font: pygame.font.Font) -> None:
-        """
-        Register a font with this object.
-        
-        Parameters
-        ----------
-        name : str
-            The unique name for this font.
-        font : pygame.font.Font
-            The font to register.
+        `anchor`, `position`, or `size` are optional, but one has to be specified.
 
         Raises
         ------
+        TypeError
+            - Provided anchor isn't an `Anchor` object.
+            - Provided position X and Y values aren't `int` or `float`.
         ValueError
-            If the unique name already exists.
-        """
+            - If none of the parameters above are provided.
+            - If any value of position is `float` and is not between `0` and `1`.
+        '''
         
-        if name in self._fonts:
-            error:str = f"Font with name {name} is already registered as a font."
+        if not anchor and not position:
+            error: str = "Method requires at least one of `anchor` or `position` to be specified"
             raise ValueError(error)
-        
-        self._fonts[name] = font
 
-    def render(self) -> None:
-        if self._engine._pipeline == Pipeline.PYGAME:
-            self._engine.screen.blit(self.text, self.rect.topleft)
-        elif self._engine._pipeline == Pipeline.OPENGL:
-            if not self._gl_texture_id:
-                return
+        if anchor:
+            if not isinstance(anchor, Anchor):
+                error: str = "Provided anchor must be an `Anchor` object"
+                raise TypeError(error)
             
-            width:int = self.text.get_width()
-            height:int = self.text.get_height()
-
-            posX:int = self.rect.left
-            posY:int = self.rect.top
-
-            if not self._flipped:
-                posY = self._engine.screen.get_height() - (self.rect.top + self.text.get_height())
-
-            glPushMatrix()
-
-            glEnable(GL_TEXTURE_2D)
-            glBindTexture(GL_TEXTURE_2D, self._gl_texture_id)
-
-            glEnable(GL_BLEND)
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-
-            if self._engine.settings.antialiasing:
-                glEnable(GL_MULTISAMPLE)
-
-            glColor4f(1.0, 1.0, 1.0, 1.0)
-
-            glBegin(GL_QUADS)
-            if self._flipped:
-                glTexCoord2f(0, 1)
-                glVertex2f(posX, posY)
-                glTexCoord2f(1, 1)
-                glVertex2f(posX + width, posY)
-                glTexCoord2f(1, 0)
-                glVertex2f(posX + width, posY + height)
-                glTexCoord2f(0, 0)
-                glVertex2f(posX, posY + height)
-            else:
-                glTexCoord2f(0, 0)
-                glVertex2f(posX, posY)
-                glTexCoord2f(1, 0)
-                glVertex2f(posX + width, posY)
-                glTexCoord2f(1, 1)
-                glVertex2f(posX + width, posY + height)
-                glTexCoord2f(0, 1)
-                glVertex2f(posX, posY + height)
-            glEnd()
-
-            glBindTexture(GL_TEXTURE_2D, 0)
-            glDisable(GL_BLEND)
-            glDisable(GL_TEXTURE_2D)
-
-            if self._engine.settings.antialiasing:
-                glDisable(GL_MULTISAMPLE)
-
-            glPopMatrix()
-
-        for child in self._children:
-            child.ask_render()
-
-    def set_color(self, name: str) -> None:
-        '''
-        Set the color of this text from a registered name.
-
-        Parameters
-        ----------
-        name : str
-            The unique name previously registered to a color.
+            self._anchor = anchor
         
-        Raises
-        ------
-        ValueError
-            If a color with the desired name doesn't exist.
-        '''
-
-        if name not in self._colors:
-            error:str = f"Color with name {name} is not registered as a color."
-            raise ValueError(error)
+        if position:
+            if not isinstance(position[0], (int, float)) or not isinstance(position[1], (int, float)):
+                error: str = "Provided position X and Y values must be either `int` or `float`"
+                raise TypeError(error)
+            
+            if isinstance(position[0], float) and (0.0 > position[0] or 1.0 < position[0]):
+                error: str = "Provided position X value must be between 0 and 1 as it's a `float`"
+                raise ValueError(error)
+            
+            if isinstance(position[1], float) and (0.0 > position[1] or 1.0 < position[1]):
+                error: str = "Provided position Y value must be between 0 and 1 as it's a `float`"
+                raise ValueError(error)
+            
+            self._local_position = position
         
-        self._color = self._colors[name]
-        self._render_text()
+        self._apply_transform()
     
-    def set_font(self, name: str) -> None:
+    def tween(
+        self,
+        position: Iterable[Union[int, float]],
+        duration: float,
+        easing: Callable[[float], float] = Easing.LINEAR
+    ) -> None:
         '''
-        Set the font of this text from a registered name.
+        Tween/animate this element to an end state over a period of time.
         
         Parameters
         ----------
-        name : str
-            The unique name previously registered to a font.
+        position : typing.Iterable[int | float]
+            The end position to reach.
+        duration : float
+            The time in which it'll take to animate this element in seconds.
+        easing : typing.Callable[[float], float]
+            The easing function to use when animating.
         
         Raises
         ------
+        TypeError
+            - If `position` is not an iterable object.
+            - If `duration` is not `int` or `float`.
         ValueError
-            If the unique name does not exist.
+            - If `position` doesn't contain only two values.
+            - If `position` or `duration` don't contain `int` or `float` values.
         '''
-        
-        if name not in self._fonts:
-            error:str = f"Font with name {name} is not registered as a font."
-            raise ValueError(error)
-        
-        self._font = self._fonts[name]
-        self._render_text()
+
+        if not isinstance(position, (tuple, list, ndarray)):
+            error: str = "Provided `position` must be an iterable (tuple, list, NumPy array, etc.)"
+            raise TypeError(error)
     
-    def set_pixel_position(self, position: IntVector2) -> None:
-        '''
-        Set the exact pixel position of this object.
+        if not isinstance(duration, (int, float)):
+            error: str = "Provided `duration` must be an `int` or `float`"
+            raise TypeError(error)
         
-        Parameters
-        ----------
-        position : IntVector2
-            The exact position to place the top-left of this object.
-        '''
-
-        position = position if isinstance(position, IntVector2) else IntVector2.from_iterable(position)
-        position.x += self._parent.rect.left
-        position.y += self._parent.rect.top
-
-        self.rect = pygame.Rect(position.to_tuple(), self.text.get_rect().size)
-
-    def set_scaled_position(self, position: FloatVector2) -> None:
-        '''
-        Set the scaled pixel position of this object.
-        
-        Parameters
-        ----------
-        position : FloatVector2
-            The scaled position to place the top-left of this object.
-        
-        Raises
-        ------
-        ValueError
-            If the provided positional values exceed `0`-`1`.
-        '''
-        
-        position = position if isinstance(position, FloatVector2) else FloatVector2.from_iterable(position)
-
-        if position.x > 1 or position.x < 0 or position.y > 1 or position.y < 0:
-            error:str = "Scaled position X, Y values must be between 0 and 1"
+        if len(position) != 2:
+            error: str = "Provided `position` must only contain two values"
             raise ValueError(error)
-        
-        new_position:IntVector2 = IntVector2(
-            int(self._parent.rect.left + (self._parent.rect.width * position.x)),
-            int(self._parent.rect.top + (self._parent.rect.height * position.y))
+
+        for value in position:
+            if isinstance(value, (int, float)):
+                continue
+
+            error: str = "Provided `position` values can only be `int` or `float`"
+            raise ValueError(error)
+
+        self._tween = TextTween(
+            pygame.time.get_ticks(), duration, easing,
+            self._local_position, position
         )
-
-        self.rect = pygame.Rect(new_position.to_tuple(), self.text.get_rect().size)
-    
-    def set_text(self, text: str) -> None:
-        '''
-        Set the text of this object.
-        
-        Parameters
-        ----------
-        text : str
-            The raw text to set.
-        '''
-        
-        self.raw_text = text
-        self._render_text()
-
-        self.rect = pygame.Rect(self.rect.topleft, self.text.get_rect().size)

@@ -1,13 +1,15 @@
 from __future__ import annotations
 
-from typing import Any, Callable, TYPE_CHECKING
+from typing import Callable, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from wame.engine import Engine
 
 from wame.pipeline import Pipeline
+from wame.plugins.execution import ExecutionStep
+from wame.plugins.events.base import Event
+from wame.plugins.events.scene import *
 from wame.ui.frame import Frame
-from wame.utils.tween import Tween
 from wame.vector import IntVector2
 
 from OpenGL.GL import *
@@ -15,6 +17,8 @@ from OpenGL.GL import *
 import pygame
 import time
 import warnings
+
+__all__ = ("Scene",)
 
 def _warn_init_override(cls):
     original = cls.__init__
@@ -41,7 +45,6 @@ class Scene:
     __slots__ = (
         "engine", "screen", "frame", "_first_elapsed", "_events_first", "_events_update",
         "_subscribers_key_pressed", "_subscribers_mouse_click", "_subscribers_mouse_move",
-        "tween"
     )
 
     def __init__(self, engine: 'Engine', *args, **kwargs) -> None:
@@ -58,10 +61,6 @@ class Scene:
         self.screen: pygame.Surface = self.engine.screen
         '''The screen rendering all objects.'''
 
-        self.frame: Frame = Frame(engine)
-        '''The UI frame responsible for handling all scene UI objects natively - Rendered each frame after `on_render` automatically, unless disabled.'''
-        self.frame.set_pixel_transform((0, 0), (self.screen.get_width(), self.screen.get_height()))
-
         self._first_elapsed: bool = False
         
         self._events_first: set[Callable[[], None]] = set()
@@ -74,112 +73,250 @@ class Scene:
         self._subscribers_key_pressed.add(self.on_key_pressed)
         self._subscribers_mouse_click.add(self.on_mouse_pressed)
         self._subscribers_mouse_move.add(self.on_mouse_move)
-        
-        self.tween: Tween = Tween(self)
-        '''The tweening object responsible for animating objects.'''
 
+        self.frame: Frame = Frame(self, None, position=(0, 0), size=(1.0, 1.0))
+        '''The UI frame responsible for handling all scene UI objects natively - Rendered each frame after `on_render` automatically, unless disabled.'''
+
+        self.engine._dispatch_plugin_event(ExecutionStep.BEFORE, InitEvent, args=args, kwargs=kwargs)
         self.on_init(*args, **kwargs)
+        self.engine._dispatch_plugin_event(ExecutionStep.AFTER, InitEvent, args=args, kwargs=kwargs)
 
     def _check_events(self) -> None:
         for event in pygame.event.get():
             if event.type == pygame.JOYAXISMOTION:
-                self.on_joy_axis_motion(event.joy, event.axis, event.value)
+                self._dispatch(
+                    JoystickAxisMotionEvent,
+                    self.on_joystick_axis_motion,
+                    (event.joy, event.axis, event.value),
+                    scene=self, joystick=event.joy, axis=event.axis, position=event.value
+                )
             elif event.type == pygame.JOYBUTTONDOWN:
-                self.on_joy_button_down(event.joy, event.button)
+                self._dispatch(
+                    JoystickButtonDownEvent,
+                    self.on_joystick_button_down,
+                    (event.joy, event.button),
+                    scene=self, joystick=event.joy, button=event.button
+                )
             elif event.type == pygame.JOYBUTTONUP:
-                self.on_joy_button_up(event.joy, event.button)
+                self._dispatch(
+                    JoystickButtonUpEvent,
+                    self.on_joystick_button_up,
+                    (event.joy, event.button),
+                    scene=self, joystick=event.joy, button=event.button
+                )
             elif event.type == pygame.JOYDEVICEADDED:
-                self.on_joy_device_added(event.device_index)
+                self._dispatch(
+                    JoystickDeviceAddedEvent,
+                    self.on_joystick_device_added,
+                    (event.device_index),
+                    scene=self, joystick=event.device_index
+                )
             elif event.type == pygame.JOYDEVICEREMOVED:
-                self.on_joy_device_removed(event.device_index)
+                self._dispatch(
+                    JoystickDeviceRemovedEvent,
+                    self.on_joystick_device_removed,
+                    (event.device_index),
+                    scene=self, joystick=event.device_index
+                )
             elif event.type == pygame.JOYHATMOTION:
-                self.on_joy_hat_motion(event.joy, event.hat, IntVector2.from_iterable(event.value))
+                position: IntVector2 = IntVector2.from_iterable(event.value)
+
+                self._dispatch(
+                    JoystickHatMotionEvent,
+                    self.on_joystick_hat_motion,
+                    (event.joy, event.hat, position),
+                    scene=self, joystick=event.joy, hat=event.hat, position=position
+                )
             elif event.type == pygame.KEYDOWN:
-                for subscriber in self._subscribers_key_pressed:
-                    subscriber(event.key, event.mod)
+                self._dispatch(
+                    KeyPressedEvent,
+                    lambda key, mods: [subscriber(key, mods) for subscriber in self._subscribers_key_pressed],
+                    (event.key, event.mod),
+                    scene=self, key=event.key, mod=event.mod
+                )
             elif event.type == pygame.KEYUP:
-                self.on_key_released(event.key, event.mod)
+                self._dispatch(
+                    KeyReleasedEvent,
+                    self.on_key_released,
+                    (event.key, event.mod),
+                    scene=self, key=event.key, mod=event.mod
+                )
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                mousePosition: IntVector2 = IntVector2.from_iterable(event.pos)
-
-                if event.button in [4, 5]:  # Scrolling shouldn't send a `MOUSEBUTTONDOWN` event
+                if event.button in [4, 5]:  # Skip scroll wheel events here
                     continue
 
-                for subscriber in self._subscribers_mouse_click:
-                    subscriber(mousePosition, event.button)
+                position: IntVector2 = IntVector2.from_iterable(event.pos)
+
+                self._dispatch(
+                    MousePressedEvent,
+                    lambda pos, button: [subscriber(pos, button) for subscriber in self._subscribers_mouse_click],
+                    (position, event.button),
+                    scene=self, position=position, button=event.button
+                )
             elif event.type == pygame.MOUSEBUTTONUP:
-                mousePosition: IntVector2 = IntVector2.from_iterable(event.pos)
-
-                if event.button in [4, 5]:  # Scrolling shouldn't send a `MOUSEBUTTONUP` event
+                if event.button in [4, 5]:
                     continue
 
-                self.on_mouse_released(mousePosition, event.button)
+                position: IntVector2 = IntVector2.from_iterable(event.pos)
+
+                self._dispatch(
+                    MouseReleasedEvent,
+                    self.on_mouse_released,
+                    (position, event.button),
+                    scene=self, position=position, button=event.button
+                )
             elif event.type == pygame.MOUSEMOTION:
-                mousePosition: IntVector2 = IntVector2.from_iterable(event.pos)
+                position: IntVector2 = IntVector2.from_iterable(event.pos)
+                relative: IntVector2 = IntVector2.from_iterable(event.rel)
 
-                for subscriber in self._subscribers_mouse_move:
-                    subscriber(mousePosition, IntVector2.from_iterable(event.rel))
+                self._dispatch(
+                    MouseMoveEvent,
+                    lambda pos, rel_: [subscriber(pos, rel_) for subscriber in self._subscribers_mouse_move],
+                    (position, relative),
+                    scene=self, position=position, relative=relative
+                )
             elif event.type == pygame.MOUSEWHEEL:
-                mousePosition: IntVector2 = IntVector2.from_iterable(pygame.mouse.get_pos())
+                position: IntVector2 = IntVector2.from_iterable(pygame.mouse.get_pos())
 
-                self.on_mouse_wheel_scroll(mousePosition, event.y)
+                self._dispatch(
+                    MouseWheelScrollEvent,
+                    self.on_mouse_wheel_scroll,
+                    (position, event.y),
+                    scene=self, position=position, amount=event.y
+                )
             elif event.type == pygame.QUIT:
                 self.engine._running = False
             elif event.type == pygame.USEREVENT:
-                self.on_user_event(event)
+                self._dispatch(
+                    UserEvent,
+                    self.on_user_event,
+                    (event,),
+                    scene=self, event=event
+                )
             elif event.type == pygame.WINDOWCLOSE:
-                self.on_window_close()
+                self._dispatch(
+                    WindowCloseEvent,
+                    self.on_window_close,
+                    (),
+                    scene=self
+                )
             elif event.type == pygame.WINDOWDISPLAYCHANGED:
-                self.on_window_display_changed()
+                self._dispatch(
+                    WindowDisplayChangedEvent,
+                    self.on_window_display_changed,
+                    (),
+                    scene=self
+                )
             elif event.type == pygame.WINDOWENTER:
-                self.on_window_mouse_enter()
+                self._dispatch(
+                    WindowMouseEnterEvent,
+                    self.on_window_mouse_enter,
+                    (),
+                    scene=self
+                )
             elif event.type == pygame.WINDOWFOCUSGAINED:
-                self.on_window_focus_gained()
+                self._dispatch(
+                    WindowFocusGainedEvent,
+                    self.on_window_focus_gained,
+                    (),
+                    scene=self
+                )
             elif event.type == pygame.WINDOWFOCUSLOST:
-                self.on_window_focus_lost()
+                self._dispatch(
+                    WindowFocusLostEvent,
+                    self.on_window_focus_lost,
+                    (),
+                    scene=self
+                )
             elif event.type == pygame.WINDOWHIDDEN:
-                self.on_window_hidden()
+                self._dispatch(
+                    WindowHiddenEvent,
+                    self.on_window_hidden,
+                    (),
+                    scene=self
+                )
             elif event.type == pygame.WINDOWLEAVE:
-                self.on_window_mouse_leave()
+                self._dispatch(
+                    WindowMouseLeaveEvent,
+                    self.on_window_mouse_leave,
+                    (),
+                    scene=self
+                )
             elif event.type == pygame.WINDOWMAXIMIZED:
-                self.on_window_maximized()
+                self._dispatch(
+                    WindowMaximizedEvent,
+                    self.on_window_maximized,
+                    (),
+                    scene=self
+                )
             elif event.type == pygame.WINDOWMINIMIZED:
-                self.on_window_minimized()
+                self._dispatch(
+                    WindowMinimizedEvent,
+                    self.on_window_minimized,
+                    (),
+                    scene=self
+                )
             elif event.type == pygame.WINDOWMOVED:
-                self.on_window_moved(IntVector2(event.x, event.y))
+                position: IntVector2 = IntVector2(event.x, event.y)
+
+                self._dispatch(
+                    WindowMovedEvent,
+                    self.on_window_moved,
+                    (position,),
+                    scene=self, position=position
+                )
             elif event.type == pygame.WINDOWRESIZED:
-                self.on_window_resize(IntVector2(event.x, event.y))
+                size: IntVector2 = IntVector2(event.x, event.y)
+
+                self._dispatch(
+                    WindowResizeEvent,
+                    self.on_window_resize,
+                    (size,),
+                    scene=self, size=size
+                )
             elif event.type == pygame.WINDOWRESTORED:
-                self.on_window_restored()
+                self._dispatch(
+                    WindowRestoredEvent,
+                    self.on_window_restored,
+                    (),
+                    scene=self
+                )
             elif event.type == pygame.WINDOWSHOWN:
-                self.on_window_shown()
+                self._dispatch(
+                    WindowShownEvent,
+                    self.on_window_shown,
+                    (),
+                    scene=self
+                )
     
     def _check_keys(self) -> None:
         keys: pygame.key.ScancodeWrapper = pygame.key.get_pressed()
         mods: int = pygame.key.get_mods()
 
-        event: Callable[[int, int], None] = self.on_key_pressed
-
-        for key, pressed in enumerate(keys):
-            if not pressed:
+        for key in range(len(keys)):
+            if not keys[key]:
                 continue
 
-            event(key, mods)
+            self._dispatch(KeyPressingEvent, self.on_key_pressing, (key, mods), scene=self, key=key, mods=mods)
     
     def _cleanup(self) -> None:
-        self.on_cleanup()
+        self._dispatch(CleanupEvent, self.on_cleanup, (), scene=self)
     
+    def _dispatch(self, event: type[Event], local_callback: Callable, args: tuple, **kwargs: dict) -> None:
+        if self.engine._dispatch_plugin_event(ExecutionStep.BEFORE, event, **kwargs):
+            return
+        
+        local_callback(*args)
+        self.engine._dispatch_plugin_event(ExecutionStep.AFTER, event, **kwargs)
+
     def _first(self) -> None:
-        for event in self._events_first:
-            event()
+        self._dispatch(FirstEvent, lambda: ([event() for event in self._events_first], self.on_first()), (), scene=self)
 
         if not self.engine._game_loop_enabled:
             self.engine.step_game_loop()
 
-        self.on_first()
-
     def _fixed_update(self) -> None:
-        self.on_fixed_update()
+        self._dispatch(FixedUpdateEvent, self.on_fixed_update, (), scene=self)
 
     def _render(self) -> None:
         if self.engine._pipeline == Pipeline.PYGAME:
@@ -187,8 +324,7 @@ class Scene:
         elif self.engine._pipeline == Pipeline.OPENGL:
             glClearColor(self.engine.background_color.nr, self.engine.background_color.ng, self.engine.background_color.nb, 1.0)
 
-        self.on_render()
-        self.frame.ask_render()
+        self._dispatch(RenderEvent, lambda: (self.on_render(), self.frame.request_render()), (), scene=self)
 
         pygame.display.flip()
         
@@ -203,10 +339,7 @@ class Scene:
         if not self._first_elapsed:
             self._first_elapsed = True
         
-        for event in self._events_update:
-            event()
-
-        self.on_update()
+        self._dispatch(UpdateEvent, lambda: ([event() for event in self._events_update], self.on_update()), (), scene=self)
     
     def on_cleanup(self) -> None:
         '''
@@ -290,7 +423,7 @@ class Scene:
 
         ...
 
-    def on_joy_axis_motion(self, stick: int, axis: int, position: float) -> None:
+    def on_joystick_axis_motion(self, stick: int, axis: int, position: float) -> None:
         '''
         Code below should be executed when a joystick's axis moves
         
@@ -301,14 +434,14 @@ class Scene:
             def on_init(self, *args, **kwargs) -> None:
                 ...
             
-            def on_joy_axis_motion(self, stick:int, axis:int, position:float) -> None:
+            def on_joystick_axis_motion(self, stick:int, axis:int, position:float) -> None:
                 ...
         ```
         '''
         
         ...
     
-    def on_joy_button_down(self, stick: int, button: int) -> None:
+    def on_joystick_button_down(self, stick: int, button: int) -> None:
         '''
         Code below should be executed when a joystick's button gets pressed
         
@@ -319,14 +452,14 @@ class Scene:
             def on_init(self, *args, **kwargs) -> None:
                 ...
             
-            def on_joy_button_down(self, stick:int, button:int) -> None:
+            def on_joystick_button_down(self, stick:int, button:int) -> None:
                 ...
         ```
         '''
         
         ...
     
-    def on_joy_button_up(self, stick: int, button: int) -> None:
+    def on_joystick_button_up(self, stick: int, button: int) -> None:
         '''
         Code below should be executed when a joystick's button gets released
         
@@ -337,14 +470,14 @@ class Scene:
             def on_init(self, *args, **kwargs) -> None:
                 ...
             
-            def on_joy_button_up(self, stick:int, button:int) -> None:
+            def on_joystick_button_up(self, stick:int, button:int) -> None:
                 ...
         ```
         '''
         
         ...
     
-    def on_joy_device_added(self, device: int) -> None:
+    def on_joystick_device_added(self, device: int) -> None:
         '''
         Code below should be executed when a new joystick device is added
         
@@ -355,14 +488,14 @@ class Scene:
             def on_init(self, *args, **kwargs) -> None:
                 ...
             
-            def on_joy_device_added(self, device:int) -> None:
+            def on_joystick_device_added(self, device:int) -> None:
                 ...
         ```
         '''
         
         ...
     
-    def on_joy_device_removed(self, device: int) -> None:
+    def on_joystick_device_removed(self, device: int) -> None:
         '''
         Code below should be executed when an old joystick device is removed
         
@@ -373,14 +506,14 @@ class Scene:
             def on_init(self, *args, **kwargs) -> None:
                 ...
             
-            def on_joy_device_removed(self, device:int) -> None:
+            def on_joystick_device_removed(self, device:int) -> None:
                 ...
         ```
         '''
         
         ...
     
-    def on_joy_hat_motion(self, stick: int, hat: int, position: IntVector2) -> None:
+    def on_joystick_hat_motion(self, stick: int, hat: int, position: IntVector2) -> None:
         '''
         Code below should be executed when a joystick's hat/D-Pad moves
         
@@ -391,7 +524,7 @@ class Scene:
             def on_init(self, *args, **kwargs) -> None:
                 ...
             
-            def on_joy_hat_motion(self, stick:int, hat:int, position:wame.IntVector2) -> None:
+            def on_joystick_hat_motion(self, stick:int, hat:int, position:wame.IntVector2) -> None:
                 ...
         ```
         '''
@@ -526,22 +659,6 @@ class Scene:
         '''
 
         ...
-
-    def on_tweened(self, object_: Any) -> None:
-        '''
-        Code below should be executed when a tweened object using `self.tween` has finished tweening.
-        
-        Example
-        -------
-        ```python
-        class MyScene(wame.Scene):
-            def on_init(self, *args, **kwargs) -> None:
-                ...
-
-            def on_tweened(self, object_: Any) -> None:
-                ...
-        ```
-        '''
 
     def on_user_event(self, event: pygame.event.Event) -> None:
         '''

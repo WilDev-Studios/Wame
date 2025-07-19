@@ -18,7 +18,6 @@ theme:
     - navigation.tabs
     - navigation.tabs.sticky
     - navigation.tracking
-    - navigation.expand
     - navigation.path
     - navigation.indexes
     - search.suggest
@@ -54,6 +53,7 @@ plugins:
             show_symbol_type_toc: true
             members_order: source
             extra:
+              show_imports: false
               show_toc: false
 
 markdown_extensions:
@@ -71,36 +71,32 @@ extra:
 
 nav:
   - Home: index.md
-  - Documentation:
-    - Color: pages/documentation/color.md
-    - Utils: pages/documentation/utils.md
-    - Engine: pages/documentation/engine.md
-    - Pipeline: pages/documentation/pipeline.md
-    - Scene: pages/documentation/scene.md
-    - Settings: pages/documentation/settings.md
-    - UI: pages/documentation/ui.md
-    - Vector: pages/documentation/vector.md
-  - Tutorials:
-    - Tutorials: pages/tutorials/index.md
-    - FPS:
-      - FPS Display: pages/tutorials/fps/fps_display.md
-      - Toggled FPS Display: pages/tutorials/fps/toggled_fps_display.md
-    - Scenes:
-      - Passing Data: pages/tutorials/scenes/passing_data.md
   - API Reference:
     - Color:
       - RGB: pages/api/color/rgb.md
       - Values: pages/api/color/values.md
+    - Plugins:
+      - Events:
+        - Base: pages/api/plugins/events/base.md
+        - Lifetime: pages/api/plugins/events/lifetime.md
+        - Scene:
+          - Base: pages/api/plugins/events/scene/base.md
+          - Joystick: pages/api/plugins/events/scene/joystick.md
+          - Key: pages/api/plugins/events/scene/key.md
+          - Mouse: pages/api/plugins/events/scene/mouse.md
+          - Other: pages/api/plugins/events/scene/other.md
+          - Window: pages/api/plugins/events/scene/window.md
+      - Execution: pages/api/plugins/execution.md
+      - Handler: pages/api/plugins/handler.md
+      - Plugin: pages/api/plugins/plugin.md
+    - UI:
+      - Anchor: pages/api/ui/anchor.md
+      - Element: pages/api/ui/element.md
+      - Frame: pages/api/ui/frame.md
+      - Text: pages/api/ui/text.md
     - Utils:
       - Keys: pages/api/utils/keys.md
       - Tween: pages/api/utils/tween.md
-    - UI:
-      - Button: pages/api/ui/button.md
-      - Frame: pages/api/ui/frame.md
-      - Image: pages/api/ui/image.md
-      - Input: pages/api/ui/input.md
-      - Renderable: pages/api/ui/renderable.md
-      - Text: pages/api/ui/text.md
     - Vector:
       - Base: pages/api/vector/base.md
       - XY: pages/api/vector/xy.md
@@ -112,6 +108,7 @@ nav:
     - Settings: pages/api/settings.md
   - Changelog:
     - Index: pages/changelog/index.md
+    - 0.8.0 (7-18-2025): pages/changelog/0.8.0.md
     - 0.7.0 (5-17-2025): pages/changelog/0.7.0.md
     - 0.6.0 (5-14-2025): pages/changelog/0.6.0.md
     - 0.5.0 (5-7-2025): pages/changelog/0.5.0.md
@@ -122,3 +119,11 @@ nav:
     - 0.0.1 (7-11-2024): pages/changelog/0.0.1.md
     - 0.0.1.dev2 (7-11-2024): pages/changelog/0.0.1.dev2.md
     - 0.0.1.dev1 (7-11-2024): pages/changelog/0.0.1.dev1.md
+  - Documentation:
+    - Plugins:
+      - Plugins: pages/documentation/plugins/index.md
+      - Usage: pages/documentation/plugins/usage.md
+      - Create:
+        - Environment: pages/documentation/plugins/create/environment.md
+        - Definition: pages/documentation/plugins/create/definition.md
+        - Examples: pages/documentation/plugins/create/examples.md

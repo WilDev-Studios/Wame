@@ -1,30 +1,36 @@
 from __future__ import annotations
 
-from wame.color.rgb import ColorRGB
+from wame.color.rgb import ColorRGB, ColorRGBA
 
 class RGB:
     '''Common RGB Values.'''
 
-    BLACK:ColorRGB = ColorRGB(0, 0, 0)
+    BLACK: ColorRGB = ColorRGB(0, 0, 0)
     '''`RGB: 0, 0, 0`.'''
 
-    BLUE:ColorRGB = ColorRGB(0, 0, 255)
+    BLUE: ColorRGB = ColorRGB(0, 0, 255)
     '''`RGB: 0, 0, 255`.'''
 
-    CYAN:ColorRGB = ColorRGB(0, 255, 255)
+    CYAN: ColorRGB = ColorRGB(0, 255, 255)
     '''`RGB: 0, 255, 255`.'''
 
-    GREEN:ColorRGB = ColorRGB(0, 255, 0)
+    GREEN: ColorRGB = ColorRGB(0, 255, 0)
     '''`RGB: 0, 255, 0`.'''
 
-    PINK:ColorRGB = ColorRGB(255, 0, 255)
+    PINK: ColorRGB = ColorRGB(255, 0, 255)
     '''`RGB: 255, 0, 255`.'''
 
-    RED:ColorRGB = ColorRGB(255, 0, 0)
+    RED: ColorRGB = ColorRGB(255, 0, 0)
     '''`RGB: 255, 0, 0`.'''
 
-    WHITE:ColorRGB = ColorRGB(255, 255, 255)
+    WHITE: ColorRGB = ColorRGB(255, 255, 255)
     '''`RGB: 255, 255, 255`.'''
 
-    YELLOW:ColorRGB = ColorRGB(255, 255, 0)
+    YELLOW: ColorRGB = ColorRGB(255, 255, 0)
     '''`RGB: 255, 255, 0`.'''
+
+class RGBA:
+    '''Common RGBA Values.'''
+
+    TRANSPARENT: ColorRGBA = ColorRGBA(0, 0, 0, 0)
+    '''`RGBA: 0, 0, 0, 0`.'''
