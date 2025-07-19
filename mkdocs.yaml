@@ -108,6 +108,7 @@ nav:
     - Settings: pages/api/settings.md
   - Changelog:
     - Index: pages/changelog/index.md
+    - 0.9.0 (UNRELEASED): pages/changelog/0.9.0.md
     - 0.8.0 (7-18-2025): pages/changelog/0.8.0.md
     - 0.7.0 (5-17-2025): pages/changelog/0.7.0.md
     - 0.6.0 (5-14-2025): pages/changelog/0.6.0.md

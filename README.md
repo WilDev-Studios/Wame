@@ -2,7 +2,7 @@
 
 Simple, Pythonic, Pygame Wrapper
 
-- Latest Version `v0.8.0`
+- Latest Version `v0.9.0`
 - Supports Python `3.7+`
 
 [![Documentation Status](https://readthedocs.org/projects/wame/badge/?version=latest&style=for-the-badge)](https://wame.readthedocs.io/en/latest/?badge=latest)
