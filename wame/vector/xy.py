@@ -24,31 +24,31 @@ class FloatVector2(BaseVector2):
             Coordinate on the Y-axis.
         '''
 
-        self._array:NDArray[np.float32] = np.array([x, y], np.float32)
+        self._array: nDArray[np.float32] = np.array([x, y], np.float32)
 
     def __add__(self, other: FloatVector2) -> FloatVector2:
         if isinstance(other, FloatVector2):
             return FloatVector2.from_iterable(self._array + other._array)
         
-        error:str = f"Unsupported operand type(s) for +: `FloatVector2` and `{type(other).__name__}`"
+        error: str = f"Unsupported operand type(s) for +: `FloatVector2` and `{type(other).__name__}`"
         raise TypeError(error)
 
     def __floordiv__(self, scalar: Union[int, float]) -> FloatVector2:
         if scalar == 0:
-            error:str = "Cannot divide by zero"
+            error: str = "Cannot divide by zero"
             raise ZeroDivisionError(error)
         
         if isinstance(scalar, (int, float)):
             return FloatVector2.from_iterable(self._array // scalar)
         
-        error:str = "Can only divide `FloatVector2` by an `int` or `float`"
+        error: str = "Can only divide `FloatVector2` by an `int` or `float`"
         raise TypeError(error)
 
     def __mul__(self, scalar: float) -> FloatVector2:
         if isinstance(scalar, (float, int)):
             return FloatVector2.from_iterable(self._array * scalar)
         
-        error:str = "Can only multiply `FloatVector2` by a `float` or `int`"
+        error: str = "Can only multiply `FloatVector2` by a `float` or `int`"
         raise TypeError(error)
 
     def __neg__(self) -> FloatVector2:
@@ -58,12 +58,12 @@ class FloatVector2(BaseVector2):
         if isinstance(other, FloatVector2):
             return FloatVector2.from_iterable(other._array - self._array)
         
-        error:str = f"Unsupported operand type(s) for -: `{type(other).__name__}` and `FloatVector2`"
+        error: str = f"Unsupported operand type(s) for -: `{type(other).__name__}` and `FloatVector2`"
         raise TypeError(error)
 
-    def __setitem__(self, index: int, value:float) -> None:
+    def __setitem__(self, index: int, value: float) -> None:
         if index not in (0, 1):
-            error:str = "Index out of bounds for FloatVector2: valid indices are 0 and 1"
+            error: str = "Index out of bounds for FloatVector2: valid indices are 0 and 1"
             raise IndexError(error)
         
         self._array[index] = float(value)
@@ -72,18 +72,18 @@ class FloatVector2(BaseVector2):
         if isinstance(other, FloatVector2):
             return FloatVector2.from_iterable(self._array - other._array)
         
-        error:str = f"Unsupported operand type(s) for -: `FloatVector2` and `{type(other).__name__}`"
+        error: str = f"Unsupported operand type(s) for -: `FloatVector2` and `{type(other).__name__}`"
         raise TypeError(error)
 
     def __truediv__(self, scalar: Union[int, float]) -> FloatVector2:
         if scalar == 0:
-            error:str = "Cannot divide by zero"
+            error: str = "Cannot divide by zero"
             raise ZeroDivisionError(error)
         
         if isinstance(scalar, (int, float)):
             return FloatVector2.from_iterable(self._array / scalar)
     
-        error:str = "Can only divide `FloatVector2` by an `int` or `float`"
+        error: str = "Can only divide `FloatVector2` by an `int` or `float`"
         raise TypeError(error)
 
     def copy(self) -> FloatVector2:
@@ -139,7 +139,7 @@ class FloatVector2(BaseVector2):
         items: tuple[int, int] = tuple(iterable)
 
         if len(items) != 2:
-            error:str = "Iterable provided must only contain 2 values"
+            error: str = "Iterable provided must only contain 2 values"
             raise ValueError(error)
 
         x, y = items        
@@ -163,7 +163,7 @@ class FloatVector2(BaseVector2):
         mag: float = self.magnitude()
 
         if mag == 0:
-            error:str = "Cannot normalize a zero-length vector."
+            error: str = "Cannot normalize a zero-length vector."
             raise ZeroDivisionError(error)
         
         return self / mag
@@ -237,31 +237,31 @@ class IntVector2(BaseVector2):
             Coordinate on the Y-axis.
         '''
 
-        self._array:NDArray[np.int32] = np.array([x, y], np.int32)
+        self._array: nDArray[np.int32] = np.array([x, y], np.int32)
 
     def __add__(self, other: IntVector2) -> IntVector2:
         if isinstance(other, IntVector2):
             return IntVector2.from_iterable(self._array + other._array)
         
-        error:str = f"Unsupported operand type(s) for +: `IntVector2` and `{type(other).__name__}`"
+        error: str = f"Unsupported operand type(s) for +: `IntVector2` and `{type(other).__name__}`"
         raise TypeError(error)
 
     def __floordiv__(self, scalar: float) -> IntVector2:
         if scalar == 0:
-            error:str = "Cannot divide by zero"
+            error: str = "Cannot divide by zero"
             raise ZeroDivisionError(error)
         
         if isinstance(scalar, (int, float)):
             return IntVector2.from_iterable(self._array // scalar)
         
-        error:str = "Can only floor divide `IntVector2` by an `int` or `float`"
+        error: str = "Can only floor divide `IntVector2` by an `int` or `float`"
         raise TypeError(error)
 
     def __mul__(self, scalar: int) -> IntVector2:
         if isinstance(scalar, int):
             return IntVector2.from_iterable(self._array * scalar)
         
-        error:str = "Can only multiply `IntVector2` by an `int`"
+        error: str = "Can only multiply `IntVector2` by an `int`"
         raise TypeError(error)
 
     def __neg__(self) -> IntVector2:
@@ -271,12 +271,12 @@ class IntVector2(BaseVector2):
         if isinstance(other, IntVector2):
             return IntVector2.from_iterable(other._array - self._array)
         
-        error:str = f"Unsupported operand type(s) for -: `{type(other).__name__}` and `IntVector2`"
+        error: str = f"Unsupported operand type(s) for -: `{type(other).__name__}` and `IntVector2`"
         raise TypeError(error)
 
-    def __setitem__(self, index: int, value:int) -> None:
+    def __setitem__(self, index: int, value: int) -> None:
         if index not in (0, 1):
-            error:str = "Index out of bounds for IntVector2: valid indices are 0 and 1"
+            error: str = "Index out of bounds for IntVector2: valid indices are 0 and 1"
             raise IndexError(error)
         
         self._array[index] = int(value)
@@ -285,18 +285,18 @@ class IntVector2(BaseVector2):
         if isinstance(other, IntVector2):
             return IntVector2.from_iterable(self._array - other._array)
         
-        error:str = f"Unsupported operand type(s) for -: `IntVector2` and `{type(other).__name__}`"
+        error: str = f"Unsupported operand type(s) for -: `IntVector2` and `{type(other).__name__}`"
         raise TypeError(error)
 
     def __truediv__(self, scalar: float) -> FloatVector2:
         if scalar == 0:
-            error:str = "Cannot divide by zero"
+            error: str = "Cannot divide by zero"
             raise ZeroDivisionError(error)
         
         if isinstance(scalar, (int, float)):
             return FloatVector2.from_iterable(self._array / scalar)
     
-        error:str = "Can only divide `IntVector2` by an `int` or `float`"
+        error: str = "Can only divide `IntVector2` by an `int` or `float`"
         raise TypeError(error)
 
     def copy(self) -> IntVector2:
@@ -352,7 +352,7 @@ class IntVector2(BaseVector2):
         items: tuple[int, int] = tuple(iterable)
 
         if len(items) != 2:
-            error:str = "Iterable provided must only contain 2 values"
+            error: str = "Iterable provided must only contain 2 values"
             raise ValueError(error)
 
         x, y = items        
@@ -376,7 +376,7 @@ class IntVector2(BaseVector2):
         mag: float = self.magnitude()
 
         if mag == 0:
-            error:str = "Cannot normalize a zero-length vector."
+            error: str = "Cannot normalize a zero-length vector."
             raise ZeroDivisionError(error)
         
         return self / mag

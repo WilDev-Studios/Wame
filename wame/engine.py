@@ -46,7 +46,7 @@ class Engine:
         "_log_queue", "_plugins", "_plugin_events",
     )
 
-    _previously_instantiated:bool = False
+    _previously_instantiated: bool = False
 
     def __init__(
         self,
@@ -133,7 +133,7 @@ class Engine:
         self._pipeline: Pipeline = pipeline
 
         if pipeline not in [Pipeline.PYGAME, Pipeline.OPENGL]:
-            error:str = "Sorry, the requested pipeline is not supported."
+            error: str = "Sorry, the requested pipeline is not supported."
             raise RuntimeError(error)
         
         self._display: int = display
@@ -218,7 +218,7 @@ class Engine:
 
     def _mainloop(self) -> None:
         if not self.scene:
-            error:str = "A starting scene must be defined before the engine can start. Register a scene with any engine.register_scene ... and set the scene using engine.set_scene()"
+            error: str = "A starting scene must be defined before the engine can start. Register a scene with any engine.register_scene ... and set the scene using engine.set_scene()"
             raise RuntimeError(error)
 
         self._running = True
@@ -235,8 +235,8 @@ class Engine:
                 self._scene._check_keys()
                 self._scene._update()
 
-                now:float = time.perf_counter()
-                frame_time:float = now - self._fixed_update_last
+                now: float = time.perf_counter()
+                frame_time: float = now - self._fixed_update_last
                 self._fixed_update_last = now
                 self._fixed_update_accumulator += frame_time
 
@@ -418,7 +418,7 @@ class Engine:
             raise TypeError(error)
 
         if not overwrite and name in self._scenes:
-            error:str = f"Scene name \"{name}\" already in use"
+            error: str = f"Scene name \"{name}\" already in use"
             raise RuntimeError(error)
 
         self._scenes[name] = scene
@@ -533,7 +533,7 @@ class Engine:
                 if endIndex < 0:
                     continue
 
-                sceneName: str = fileClass.name[0:endIndex]
+                sceneName: str = fileClass.name[0: endIndex]
                 
                 module = importlib.import_module(f"{folder}.{filename[:-3]}")
                 sceneObject: Scene = getattr(module, fileClass.name)
@@ -679,7 +679,7 @@ class Engine:
             raise TypeError(error)
 
         if self._scene and self._scene._first_elapsed:
-            error:str = "Switching the rendering pipeline during the game loop is not supported"
+            error: str = "Switching the rendering pipeline during the game loop is not supported"
             raise RuntimeError(error)
 
         self._pipeline = pipeline
@@ -718,11 +718,11 @@ class Engine:
             raise TypeError(error)
 
         if name not in self.scenes:
-            error:str = f"Scene with name \"{name}\" was not registered/found"
+            error: str = f"Scene with name \"{name}\" was not registered/found"
             raise RuntimeError(error)
         
         if isinstance(self.scene, self.scenes[name]):
-            error:str = f"Scene with name \"{name}\" is already set as the active scene"
+            error: str = f"Scene with name \"{name}\" is already set as the active scene"
             raise RuntimeError(error)
         
         if self.scene is not None:

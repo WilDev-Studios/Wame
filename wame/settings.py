@@ -36,9 +36,9 @@ class Settings:
         return bool(self._antialiasing)
     
     @antialiasing.setter
-    def antialiasing(self, value:bool) -> None:
+    def antialiasing(self, value: bool) -> None:
         if not isinstance(value, bool):
-            error:str = "Antialiasing setting must be a boolean."
+            error: str = "Antialiasing setting must be a boolean."
             raise ValueError(error)
         
         changed: bool = self._antialiasing != value
@@ -57,13 +57,13 @@ class Settings:
         return self._max_fps
     
     @max_fps.setter
-    def max_fps(self, value:int) -> None:
+    def max_fps(self, value: int) -> None:
         if not isinstance(value, int):
-            error:str = "Max FPS value must be an integer."
+            error: str = "Max FPS value must be an integer."
             raise ValueError(error)
         
         if value < 0:
-            error:str = "Max FPS value must be 0 or above."
+            error: str = "Max FPS value must be 0 or above."
             raise ValueError(error)
         
         self._max_fps = value
@@ -76,9 +76,9 @@ class Settings:
         return bool(self._vsync)
     
     @vsync.setter
-    def vsync(self, value:bool) -> None:
+    def vsync(self, value: bool) -> None:
         if not isinstance(value, bool):
-            error:str = "VSync value must be a boolean."
+            error: str = "VSync value must be a boolean."
             raise ValueError(error)
         
         self._vsync = int(value)
@@ -92,5 +92,5 @@ class Settings:
         return {
             "antialiasing": self._antialiasing,
             "max_fps": self._max_fps,
-            "vsync":self._vsync
+            "vsync": self._vsync
         }

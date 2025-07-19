@@ -434,7 +434,7 @@ class Scene:
             def on_init(self, *args, **kwargs) -> None:
                 ...
             
-            def on_joystick_axis_motion(self, stick:int, axis:int, position:float) -> None:
+            def on_joystick_axis_motion(self, stick: int, axis: int, position: float) -> None:
                 ...
         ```
         '''
@@ -452,7 +452,7 @@ class Scene:
             def on_init(self, *args, **kwargs) -> None:
                 ...
             
-            def on_joystick_button_down(self, stick:int, button:int) -> None:
+            def on_joystick_button_down(self, stick: int, button: int) -> None:
                 ...
         ```
         '''
@@ -470,7 +470,7 @@ class Scene:
             def on_init(self, *args, **kwargs) -> None:
                 ...
             
-            def on_joystick_button_up(self, stick:int, button:int) -> None:
+            def on_joystick_button_up(self, stick: int, button: int) -> None:
                 ...
         ```
         '''
@@ -488,7 +488,7 @@ class Scene:
             def on_init(self, *args, **kwargs) -> None:
                 ...
             
-            def on_joystick_device_added(self, device:int) -> None:
+            def on_joystick_device_added(self, device: int) -> None:
                 ...
         ```
         '''
@@ -506,7 +506,7 @@ class Scene:
             def on_init(self, *args, **kwargs) -> None:
                 ...
             
-            def on_joystick_device_removed(self, device:int) -> None:
+            def on_joystick_device_removed(self, device: int) -> None:
                 ...
         ```
         '''
@@ -524,7 +524,7 @@ class Scene:
             def on_init(self, *args, **kwargs) -> None:
                 ...
             
-            def on_joystick_hat_motion(self, stick:int, hat:int, position:wame.IntVector2) -> None:
+            def on_joystick_hat_motion(self, stick: int, hat: int, position: wame.IntVector2) -> None:
                 ...
         ```
         '''
@@ -542,7 +542,7 @@ class Scene:
             def on_init(self, *args, **kwargs) -> None:
                 ...
             
-            def on_key_pressed(self, key:int, mods:int) -> None:
+            def on_key_pressed(self, key: int, mods: int) -> None:
                 ... # Pause game, display UI, etc.
         ```
         '''
@@ -560,7 +560,7 @@ class Scene:
             def on_init(self, *args, **kwargs) -> None:
                 ...
             
-            def on_key_pressing(self, key:int, mods:int) -> None:
+            def on_key_pressing(self, key: int, mods: int) -> None:
                 ... # Move forward, honk horn, etc.
         ```
         '''
@@ -578,7 +578,7 @@ class Scene:
             def on_init(self, *args, **kwargs) -> None:
                 ...
             
-            def on_key_released(self, key:int, mods:int) -> None:
+            def on_key_released(self, key: int, mods: int) -> None:
                 ... # Stop moving forward, etc.
         ```
         '''
@@ -596,7 +596,7 @@ class Scene:
             def on_init(self, *args, **kwargs) -> None:
                 ...
             
-            def on_mouse_move(self, mouse_position:wame.IntVector2, relative:wame.IntVector2) -> None:
+            def on_mouse_move(self, mouse_position: wame.IntVector2, relative: wame.IntVector2) -> None:
                 print(f"Mouse was moved {relative} amount @ {mouse_position}")
         ```
         '''
@@ -614,7 +614,7 @@ class Scene:
             def on_init(self, *args, **kwargs) -> None:
                 ...
             
-            def on_mouse_pressed(self, mouse_position:wame.IntVector2, button:int) -> None:
+            def on_mouse_pressed(self, mouse_position: wame.IntVector2, button: int) -> None:
                 ... # Start shooting, rotate character, etc.
         ```
         '''
@@ -632,7 +632,7 @@ class Scene:
             def on_init(self, *args, **kwargs) -> None:
                 ...
             
-            def on_mouse_released(self, mouse_position:wame.IntVector2, button:int) -> None:
+            def on_mouse_released(self, mouse_position: wame.IntVector2, button: int) -> None:
                 ... # Shoot arrow, stop shooting, etc.
         ```
         '''
@@ -650,7 +650,7 @@ class Scene:
             def on_init(self, *args, **kwargs) -> None:
                 ...
             
-            def on_mouse_wheel_scroll(self, mouse_position:wame.IntVector2, amount:int) -> None:
+            def on_mouse_wheel_scroll(self, mouse_position: wame.IntVector2, amount: int) -> None:
                 if amount > 0:
                     print(f"Scroll wheel moved up @ {mouse_position}!")
                 else:
@@ -671,7 +671,7 @@ class Scene:
             def on_init(self, *args, **kwargs) -> None:
                 ...
             
-            def on_user_event(self, event:pygame.event.Event) -> None:
+            def on_user_event(self, event: pygame.event.Event) -> None:
                 ...
         ```
         '''
@@ -851,7 +851,7 @@ class Scene:
             def on_init(self, *args, **kwargs) -> None:
                 ...
             
-            def on_window_moved(self, position:wame.IntVector2) -> None:
+            def on_window_moved(self, position: wame.IntVector2) -> None:
                 ...
         ```
         '''
@@ -869,7 +869,7 @@ class Scene:
             def on_init(self, *args, **kwargs) -> None:
                 ...
             
-            def on_window_resize(self, size:wame.IntVector2) -> None:
+            def on_window_resize(self, size: wame.IntVector2) -> None:
                 ... # Edit OpenGL viewport, etc.
         ```
         '''
