@@ -11,6 +11,7 @@ from wame.settings import Settings
 from wame.pipeline import Pipeline
 from wame.plugins.plugin import Plugin
 from wame.plugins.events.base import Event, CancellableEvent
+from wame.plugins.events.engine import *
 from wame.plugins.events.lifetime import LoadEvent, UnloadEvent
 from wame.plugins.execution import ExecutionStep
 from wame.scene import Scene
@@ -429,7 +430,9 @@ class Engine:
             error: str = f"Scene name \"{name}\" already in use"
             raise RuntimeError(error)
 
+        self._dispatch_plugin_event(ExecutionStep.BEFORE, SceneRegisteredEvent, name=name, scene=scene)
         self._scenes[name] = scene
+        self._dispatch_plugin_event(ExecutionStep.AFTER, SceneRegisteredEvent, name=name, scene=scene)
 
     def register_scenes(self, scenes: dict[str, Scene], overwrite: bool=False) -> None:
         '''
@@ -594,7 +597,9 @@ class Engine:
         if isinstance(color, tuple):
             color = ColorRGB.from_iterable(color)
 
+        self._dispatch_plugin_event(ExecutionStep.BEFORE, BackgroundChangedEvent, color=color)
         self._background_color = color
+        self._dispatch_plugin_event(ExecutionStep.AFTER, BackgroundChangedEvent, color=color)
  
     def set_game_loop_enabled(self, enabled: bool) -> None:
         '''
@@ -619,7 +624,9 @@ class Engine:
             error: str = "Parameter `enabled` must be a `bool`."
             raise TypeError(error)
 
+        self._dispatch_plugin_event(ExecutionStep.BEFORE, GameLoopStatusChangedEvent, enabled=enabled)
         self._game_loop_enabled = enabled
+        self._dispatch_plugin_event(ExecutionStep.AFTER, GameLoopStatusChangedEvent, enabled=enabled)
 
     def set_mouse_visible(self, state: bool=True) -> None:
         '''
@@ -640,8 +647,10 @@ class Engine:
             error: str = "Parameter `state` must be a `bool`."
             raise TypeError(error)
 
+        self._dispatch_plugin_event(ExecutionStep.BEFORE, MouseVisibilityChangedEvent, visible=state)
         self._mouse_visibility = state
         pygame.mouse.set_visible(state)
+        self._dispatch_plugin_event(ExecutionStep.AFTER, MouseVisibilityChangedEvent, visible=state)
 
     def set_mouse_locked(self, state: bool=False) -> None:
         '''
@@ -662,8 +671,10 @@ class Engine:
             error: str = "Parameter `state` must be a `bool`."
             raise TypeError(error)
 
+        self._dispatch_plugin_event(ExecutionStep.BEFORE, MouseLockChangedEvent, locked=state)
         self._mouse_grabbed = state
         pygame.event.set_grab(state)
+        self._dispatch_plugin_event(ExecutionStep.AFTER, MouseLockChangedEvent, locked=state)
 
     def set_pipeline(self, pipeline: Pipeline) -> None:
         '''
@@ -690,6 +701,7 @@ class Engine:
             error: str = "Switching the rendering pipeline during the game loop is not supported"
             raise RuntimeError(error)
 
+        self._dispatch_plugin_event(ExecutionStep.BEFORE, PipelineChangedEvent, pipeline=pipeline)
         self._pipeline = pipeline
 
         if pipeline == Pipeline.PYGAME:
@@ -698,6 +710,8 @@ class Engine:
             error: str = "Any pipeline besides `PYGAME` is unsupported as of this version"
             raise RuntimeError(error)
             self._screen = pygame.display.set_mode(self._size.to_tuple(), pygame.HWSURFACE | pygame.DOUBLEBUF | pygame.OPENGL, display=self._display, vsync=self.settings.vsync)
+        
+        self._dispatch_plugin_event(ExecutionStep.AFTER, PipelineChangedEvent, pipeline=pipeline)
 
     def set_scene(self, name: str, *args, **kwargs) -> None:
         '''
@@ -736,7 +750,9 @@ class Engine:
         if self.scene is not None:
             self.scene._cleanup()
 
+        self._dispatch_plugin_event(ExecutionStep.BEFORE, SceneSwitchedEvent, name=name, scene=self._scenes[name])
         self._scene = self._scenes[name](self, *args, **kwargs)
+        self._dispatch_plugin_event(ExecutionStep.AFTER, SceneSwitchedEvent, name=name, scene=self._scene)
         self._scene._first()
 
         self._fixed_update_accumulator = 0.0
@@ -761,7 +777,11 @@ class Engine:
             error: str = "Parameter `interval` must be an `Interval` object, `float`, or `int`."
             raise TypeError(error)
 
-        self._fixed_update_interval = interval.value if isinstance(interval, Interval) else interval
+        value: float = interval.value if isinstance(interval, Interval) else interval
+
+        self._dispatch_plugin_event(ExecutionStep.BEFORE, UpdateIntervalChangedEvent, interval=value)
+        self._fixed_update_interval = value
+        self._dispatch_plugin_event(ExecutionStep.AFTER, UpdateIntervalChangedEvent, interval=value)
 
     def start(self) -> None:
         '''
@@ -782,4 +802,6 @@ class Engine:
     def step_game_loop(self) -> None:
         '''Poll the game loop to run a cycle (update/render) - Only use when game loop is disabled with `.set_game_loop_enabled(False)`.'''
 
+        self._dispatch_plugin_event(ExecutionStep.BEFORE, GameLoopSteppedEvent)
         self._poll_game_loop = True
+        self._dispatch_plugin_event(ExecutionStep.AFTER, GameLoopSteppedEvent)

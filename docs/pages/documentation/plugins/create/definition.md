@@ -7,11 +7,12 @@ To get started in making a plugin, understand the following:
     1. `LifetimeEvent`: Dispatched when the lifetime of your plugin changes (`LoadEvent`, `UnloadEvent`, etc.).
     2. `CancellableEvent`: Any type of event that can be cancelled and therefore prevent any further logic from occurring.
         - `SceneEvent`: Dispatched when any event occurs within any `Scene` (`KeyPressedEvent`, `MouseScrollEvent`, etc.).
+    3. `EngineEvent`: Dispatched when the state of the `Engine` changes in any manner (`GameLoopSteppedEvent`, `BackgroundChangedEvent`, etc.).
 - Each event "listener"/handler has a specific time in which it can fire - controlled by `ExecutionStep`:
     1. `BEFORE`: Fired before the `Engine`/`Scene`/developer even sees the event. If you cancel the event, the `Engine`/`Scene`/developer can't handle the event.
     2. `AFTER`: Fired after the `Engine`/`Scene`/developer sees/handles the event. If the event is cancelled before you handle it, you won't see the event.
     3. `ExecutionStep`.`BEFORE`/`AFTER` **does not** affect `LifetimeEvent` events.
-- The normal game loop within `Engine` and `Scene` cannot be cancelled, i.e. `LifetimeEvent` or `EngineEvent` (not implemented, yet).
+- The normal game loop within `Engine` and `Scene` cannot be cancelled, i.e. `LifetimeEvent` or `EngineEvent`.
 - Each `Event` has access to an external `engine` attribute, which is a direct reference to the running `Engine`.
 - Each `SceneEvent` has access to an external `scene` attribute, which is a direct reference to the running `Scene` controlled by the `Engine`.
 - Every type of `Event` has external attributes accessible depending on the context in which the event was dispatched (`key` and `mods` for a `KeyPressedEvent`, etc.).
